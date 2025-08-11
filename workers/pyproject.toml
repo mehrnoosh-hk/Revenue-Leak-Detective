@@ -8,3 +8,8 @@ dependencies = [
     "langchain[anthropic]>=0.3.27",
     "langgraph>=0.6.4",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
