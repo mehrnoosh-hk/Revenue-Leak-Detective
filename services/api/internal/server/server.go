@@ -7,12 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"rdl-api/config"
+	"rdl-api/handlers"
+	"rdl-api/internal/middleware"
 	"syscall"
 	"time"
-
-	"rld/services/api/config"
-	"rld/services/api/handlers"
-	"rld/services/api/internal/middleware"
 )
 
 // Server represents the HTTP server

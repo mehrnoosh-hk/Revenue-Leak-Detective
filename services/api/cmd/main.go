@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"rld/services/api/config"
-	"rld/services/api/internal/server"
+	"rdl-api/config"
+	"rdl-api/internal/server"
 )
 
 // Build info - TODO: Use build flags to set these values

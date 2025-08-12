@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"log/slog"
-	"rld/services/api/config"
+	"rdl-api/config"
 )
 
 // HandlerDependencies provides dependencies for handlers

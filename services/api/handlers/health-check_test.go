@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"rld/services/api/config"
+	"rdl-api/config"
 	"strings"
 	"testing"
 )
