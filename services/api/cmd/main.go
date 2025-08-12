@@ -1,48 +1,76 @@
 package main
 
 import (
-	"log"
+	"context"
+	"flag"
+	"fmt"
 	"log/slog"
-	"net/http"
+	"os"
 	"rld/services/api/config"
-	"rld/services/api/handlers"
+	"rld/services/api/internal/server"
 )
 
-type APIService struct {
-	Config   *config.Config
-	Servemux *http.ServeMux
-	Logger *slog.Logger
-}
+// Build info - TODO: Use build flags to set these values
+var (
+	Version = "dev"
+	Commit  = "unknown"
+	Date    = "unknown"
+)
 
 func main() {
-	// Initialize configuration
-	cfg, _ := config.LoadConfig()
+	// Parse command line flags
+	versionFlag := flag.Bool("version", false, "Show version information")
+	healthFlag := flag.Bool("health", false, "Run health check and exit")
+	flag.Parse()
 
-	// Set up logging with level from config and write to file go_log and standart output
-	logger := slog.New(slog.NewTextHandler(log.Writer(), &slog.HandlerOptions{
-		Level: slog.Level(cfg.LogLevel),
-	}))
-	slog.SetDefault(logger)
-	
-
-	// Create a new ServeMux
-	mux := http.NewServeMux()
-
-	// Register handlers
-	mux.HandleFunc("/health", handlers.HealthCheckHandler)
-
-	// Create API service instance
-	apiService := &APIService{
-		Config:   cfg,
-		Servemux: mux,
-		Logger: logger,
+	// Handle version flag
+	if *versionFlag {
+		fmt.Printf("Revenue Leak Detective API\n")
+		fmt.Printf("Version: %s\n", Version)
+		fmt.Printf("Commit: %s\n", Commit)
+		fmt.Printf("Built: %s\n", Date)
+		os.Exit(0)
 	}
 
-	// Start the HTTP server
-	apiService.Logger.Info("Starting API service", "port", apiService.Config.Port)
-	err := http.ListenAndServe(":"+apiService.Config.Port, apiService.Servemux)
+	// Load configuration
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		apiService.Logger.Error("Failed to start server", "error", err)
-		return
+		slog.Error("Failed to load configuration", "error", err)
+		os.Exit(1)
+	}
+
+	// Setup logger
+	handlerOptions := &slog.HandlerOptions{
+		Level: cfg.LogLevel,
+	}
+
+	var logger *slog.Logger
+	if cfg.IsDevelopment() {
+		logger = slog.New(slog.NewTextHandler(os.Stdout, handlerOptions))
+	} else {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, handlerOptions))
+	}
+
+	// Log startup information
+	logger.Info("Starting Revenue Leak Detective API",
+		slog.String("version", Version),
+		slog.String("commit", Commit),
+		slog.String("build_date", Date),
+		slog.String("environment", cfg.Env))
+
+	// TODO: Handle health check flag (for Docker health checks)
+	if *healthFlag {
+		// TODO:Perform health check logic here
+		fmt.Println("Health check: OK")
+		os.Exit(0)
+	}
+
+	// Create and start server
+	srv := server.New(cfg, logger)
+	ctx := context.Background()
+
+	if err := srv.Start(ctx); err != nil {
+		logger.Error("Server failed to start or shutdown", "error", err)
+		os.Exit(1)
 	}
 }
