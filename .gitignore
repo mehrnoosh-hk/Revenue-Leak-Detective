@@ -1,0 +1,9 @@
+# IDEs and Editors
+.idea/
+.vscode/
+
+# Environment Variables
+.env
+.env.dev
+.env.test
+.env.prod
