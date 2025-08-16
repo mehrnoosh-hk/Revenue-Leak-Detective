@@ -5,12 +5,8 @@ Revenue Leak Detective agent workflow defined in src.agent.run.
 """
 
 import pytest
-import argparse
 import sys
 import time
-from typing import Dict, Any
-from io import StringIO
-import logging
 
 # Import from the correct module path
 from src.agent.run import (
@@ -241,7 +237,7 @@ class TestMainFunction:
             pass
             
         # In dry-run mode, no result should be printed to stdout
-        captured = capsys.readouterr()
+        capsys.readouterr()
         # Dry-run mode only logs, doesn't print result
 
     @pytest.mark.integration
