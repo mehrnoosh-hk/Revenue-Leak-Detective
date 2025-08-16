@@ -62,12 +62,13 @@ def create_workflow():
         workflow.add_node("sample", sample_node)
         workflow.add_edge(START, "sample")
         workflow.add_edge("sample", END)
-        
+
         return workflow.compile()
-        
+
     except Exception as e:
         logger.error(f"Failed to create workflow: {e}")
         raise RuntimeError(f"Workflow creation failed: {e}") from e
+
 
 def run_agent(dry_run: bool = False, message: str = "Mehrnoosh") -> dict:
     """

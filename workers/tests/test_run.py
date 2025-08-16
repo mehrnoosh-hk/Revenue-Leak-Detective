@@ -92,9 +92,9 @@ class TestSampleNode:
         assert result["message"] == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("message", [
-        "", " ", "\n", "\t", "   \t\n\r   ", "A", "A" * 10000
-    ])
+    @pytest.mark.parametrize(
+        "message", ["", " ", "\n", "\t", "   \t\n\r   ", "A", "A" * 10000]
+    )
     def test_sample_node_edge_cases(self, message: str):
         """Test sample_node with edge case messages."""
         state: State = {"message": message}
@@ -112,14 +112,14 @@ class TestCreateWorkflow:
         workflow = create_workflow()
         assert workflow is not None
         # Test that it has the invoke method (compiled graphs have this)
-        assert hasattr(workflow, 'invoke')
+        assert hasattr(workflow, "invoke")
 
     @pytest.mark.unit
     def test_create_workflow_can_process_state(self, sample_state):
         """Test that created workflow can process a state."""
         workflow = create_workflow()
         result = workflow.invoke(sample_state)
-        
+
         assert "message" in result
         assert result["message"] == "Welcome to my agent! TestMessage"
 
@@ -128,14 +128,14 @@ class TestCreateWorkflow:
         """Test that create_workflow can be called multiple times."""
         workflow1 = create_workflow()
         workflow2 = create_workflow()
-        
+
         # They should be different instances but both functional
         assert workflow1 is not workflow2
-        
+
         test_state = {"message": "test"}
         result1 = workflow1.invoke(test_state)
         result2 = workflow2.invoke(test_state)
-        
+
         assert result1 == result2
 
 
@@ -169,16 +169,16 @@ class TestRunAgent:
     def test_run_agent_dry_run_vs_normal(self):
         """Test that dry-run and normal execution produce same results."""
         message = "ComparisonTest"
-        
+
         dry_run_result = run_agent(dry_run=True, message=message)
         normal_result = run_agent(dry_run=False, message=message)
-        
+
         assert dry_run_result == normal_result
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("message", [
-        "Test", "", "Unicode🌍", "Special!@#$%", "123456", "A" * 1000
-    ])
+    @pytest.mark.parametrize(
+        "message", ["Test", "", "Unicode🌍", "Special!@#$%", "123456", "A" * 1000]
+    )
     def test_run_agent_various_messages(self, message: str):
         """Test run_agent with various message types."""
         result = run_agent(message=message)
@@ -197,7 +197,7 @@ class TestRunAgent:
     def test_run_agent_with_logging(self, log_capture):
         """Test run_agent with logging in dry-run mode."""
         run_agent(dry_run=True, message="LogTest")
-        
+
         log_contents = log_capture.getvalue()
         assert "state transition" in log_contents
         assert "LogTest" in log_contents
@@ -211,14 +211,14 @@ class TestMainFunction:
         """Test main function with default arguments."""
         # Mock sys.argv to simulate default arguments
         test_args = ["run.py"]
-        monkeypatch.setattr(sys, 'argv', test_args)
-        
+        monkeypatch.setattr(sys, "argv", test_args)
+
         # Run main function
         try:
             main()
         except SystemExit:
             pass  # main() might call sys.exit, which is OK for tests
-            
+
         # Check that output was produced
         captured = capsys.readouterr()
         # In normal mode, result should be printed
@@ -229,13 +229,13 @@ class TestMainFunction:
     def test_main_with_dry_run_flag(self, monkeypatch, capsys):
         """Test main function with dry-run flag."""
         test_args = ["run.py", "--dry-run"]
-        monkeypatch.setattr(sys, 'argv', test_args)
-        
+        monkeypatch.setattr(sys, "argv", test_args)
+
         try:
             main()
         except SystemExit:
             pass
-            
+
         # In dry-run mode, no result should be printed to stdout
         capsys.readouterr()
         # Dry-run mode only logs, doesn't print result
@@ -245,13 +245,13 @@ class TestMainFunction:
         """Test main function with custom message."""
         test_message = "CustomMainTest"
         test_args = ["run.py", "--message", test_message]
-        monkeypatch.setattr(sys, 'argv', test_args)
-        
+        monkeypatch.setattr(sys, "argv", test_args)
+
         try:
             main()
         except SystemExit:
             pass
-            
+
         captured = capsys.readouterr()
         if captured.out:
             assert test_message in captured.out
@@ -264,7 +264,9 @@ class TestErrorHandling:
     @pytest.mark.unit
     def test_sample_node_with_missing_key(self):
         """Test sample_node with missing message key."""
-        with pytest.raises(RuntimeError, match="Failed to process state in sample_node"):
+        with pytest.raises(
+            RuntimeError, match="Failed to process state in sample_node"
+        ):
             invalid_state = {}  # type: ignore
             sample_node(invalid_state)
 
@@ -272,7 +274,9 @@ class TestErrorHandling:
     @pytest.mark.unit
     def test_sample_node_with_none_message(self):
         """Test sample_node behavior with None message."""
-        with pytest.raises(RuntimeError, match="Failed to process state in sample_node"):
+        with pytest.raises(
+            RuntimeError, match="Failed to process state in sample_node"
+        ):
             invalid_state = {"message": None}  # type: ignore
             sample_node(invalid_state)
 
@@ -280,7 +284,9 @@ class TestErrorHandling:
     @pytest.mark.unit
     def test_sample_node_with_non_string_message(self):
         """Test sample_node with non-string message."""
-        with pytest.raises(RuntimeError, match="Failed to process state in sample_node"):
+        with pytest.raises(
+            RuntimeError, match="Failed to process state in sample_node"
+        ):
             invalid_state = {"message": 123}  # type: ignore
             sample_node(invalid_state)
 
@@ -291,7 +297,7 @@ class TestErrorHandling:
         with pytest.raises(RuntimeError) as exc_info:
             invalid_state = {}  # type: ignore
             sample_node(invalid_state)
-        
+
         # Check that the error message contains details about the original KeyError
         assert "'message'" in str(exc_info.value)
         # Check that the original exception is chained
@@ -303,9 +309,9 @@ class TestIntegration:
     """Integration tests for the complete workflow."""
 
     @pytest.mark.integration
-    @pytest.mark.parametrize("message", [
-        "Alice", "Bob", "123", "IntegrationTest", "Mehrnoosh", "", "🌍"
-    ])
+    @pytest.mark.parametrize(
+        "message", ["Alice", "Bob", "123", "IntegrationTest", "Mehrnoosh", "", "🌍"]
+    )
     def test_complete_workflow_end_to_end(self, message: str):
         """Test complete workflow end-to-end with various inputs."""
         result = run_agent(message=message)
@@ -325,7 +331,7 @@ class TestIntegration:
         """Test that multiple runs of the same input produce consistent results."""
         message = "ConsistencyTest"
         results = [run_agent(message=message) for _ in range(5)]
-        
+
         # All results should be identical
         expected = f"Welcome to my agent! {message}"
         for result in results:
@@ -340,11 +346,11 @@ class TestPerformance:
     def test_workflow_performance(self):
         """Test that workflow execution completes in reasonable time."""
         message = "PerformanceTest"
-        
+
         start_time = time.time()
         result = run_agent(message=message)
         end_time = time.time()
-        
+
         # Should complete in less than 1 second
         execution_time = end_time - start_time
         assert execution_time < 1.0
@@ -354,11 +360,11 @@ class TestPerformance:
     def test_workflow_with_large_message(self):
         """Test workflow performance with large message."""
         large_message = "A" * 10000  # 10KB message
-        
+
         start_time = time.time()
         result = run_agent(message=large_message)
         end_time = time.time()
-        
+
         # Should still complete reasonably fast even with large input
         execution_time = end_time - start_time
         assert execution_time < 2.0
@@ -368,15 +374,15 @@ class TestPerformance:
     def test_multiple_sequential_executions(self):
         """Test performance of multiple sequential workflow executions."""
         messages = [f"Test{i}" for i in range(10)]
-        
+
         start_time = time.time()
         results = [run_agent(message=msg) for msg in messages]
         end_time = time.time()
-        
+
         # All executions should complete in reasonable time
         total_time = end_time - start_time
         assert total_time < 5.0  # 10 executions in under 5 seconds
-        
+
         # Verify all results are correct
         for i, result in enumerate(results):
             expected = f"Welcome to my agent! Test{i}"

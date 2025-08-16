@@ -75,17 +75,17 @@ def log_capture():
     log_stream = StringIO()
     handler = logging.StreamHandler(log_stream)
     handler.setLevel(logging.INFO)
-    
+
     # Get the logger from the run module
-    logger = logging.getLogger('src.agent.run')
+    logger = logging.getLogger("src.agent.run")
     original_level = logger.level
     original_handlers = logger.handlers.copy()
-    
+
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
-    
+
     yield log_stream
-    
+
     # Cleanup
     logger.removeHandler(handler)
     logger.handlers = original_handlers
@@ -139,18 +139,10 @@ def setup_test_environment():
 # Pytest configuration
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as a performance test"
-    )
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "performance: mark test as a performance test")
     config.addinivalue_line(
         "markers", "error_handling: mark test as an error handling test"
     )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
+    config.addinivalue_line("markers", "slow: mark test as slow running")
