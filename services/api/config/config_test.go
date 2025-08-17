@@ -16,17 +16,30 @@ func TestLoadConfig(t *testing.T) {
 	originalEnv := os.Getenv("ENVIRONMENT")
 
 	// Clean up after test
-	defer func() {
-		os.Setenv("API_PORT", originalPort)
-		os.Setenv("LOG_LEVEL", originalLogLevel)
-		os.Setenv("ENVIRONMENT", originalEnv)
-	}()
+	// Helper function to restore or unset environment variable
+	restoreEnv := func(key, original string) {
+		var err error
+		if original != "" {
+			err = os.Setenv(key, original)
+		} else {
+			err = os.Unsetenv(key)
+		}
+		if err != nil {
+			t.Errorf("failed to restore %s: %v", key, err)
+		}
+	}
+
+	t.Cleanup(func() {
+		restoreEnv("API_PORT", originalPort)
+		restoreEnv("LOG_LEVEL", originalLogLevel)
+		restoreEnv("ENVIRONMENT", originalEnv)
+	})
 
 	t.Run("default configuration", func(t *testing.T) {
 		// Clear env vars
-		os.Unsetenv("API_PORT")
-		os.Unsetenv("LOG_LEVEL")
-		os.Unsetenv("ENVIRONMENT")
+		require.NoError(t, os.Unsetenv("API_PORT"))
+		require.NoError(t, os.Unsetenv("LOG_LEVEL"))
+		require.NoError(t, os.Unsetenv("ENVIRONMENT"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -37,9 +50,10 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("custom configuration from env vars", func(t *testing.T) {
-		os.Setenv("API_PORT", "3000")
-		os.Setenv("LOG_LEVEL", "DEBUG")
-		os.Setenv("ENVIRONMENT", "production")
+		// Set environment variables
+		require.NoError(t, os.Setenv("API_PORT", "3000"))
+		require.NoError(t, os.Setenv("LOG_LEVEL", "DEBUG"))
+		require.NoError(t, os.Setenv("ENVIRONMENT", "production"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -50,7 +64,7 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("invalid port", func(t *testing.T) {
-		os.Setenv("API_PORT", "invalid")
+		require.NoError(t, os.Setenv("API_PORT", "invalid"))
 
 		_, err := LoadConfig()
 		assert.Error(t, err)
@@ -58,7 +72,7 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("port out of range", func(t *testing.T) {
-		os.Setenv("API_PORT", "70000")
+		require.NoError(t, os.Setenv("API_PORT", "70000"))
 
 		_, err := LoadConfig()
 		assert.Error(t, err)
@@ -66,8 +80,8 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("invalid log level", func(t *testing.T) {
-		os.Setenv("API_PORT", "8080")
-		os.Setenv("LOG_LEVEL", "INVALID")
+		
+		require.NoError(t, os.Setenv("LOG_LEVEL", "INVALID"))
 
 		_, err := LoadConfig()
 		assert.Error(t, err)

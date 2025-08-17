@@ -9,15 +9,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChain(t *testing.T) {
-	// Mock handler that writes "handled" to response
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handled"))
+		_, err := w.Write([]byte("handled"))
+		require.NoError(t, err)
 	})
 
-	// Mock middleware that adds headers
 	middleware1 := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("X-Middleware-1", "applied")
@@ -32,16 +32,12 @@ func TestChain(t *testing.T) {
 		})
 	}
 
-	// Chain middlewares
 	chainedHandler := Chain(handler, middleware1, middleware2)
-
-	// Test request
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
 
 	chainedHandler.ServeHTTP(rr, req)
 
-	// Verify response
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, "handled", rr.Body.String())
 	assert.Equal(t, "applied", rr.Header().Get("X-Middleware-1"))
@@ -49,34 +45,25 @@ func TestChain(t *testing.T) {
 }
 
 func TestLogger(t *testing.T) {
-	// Create buffer to capture log output
 	var buf bytes.Buffer
-	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	// Mock handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, err := w.Write([]byte("OK"))
+		require.NoError(t, err)
 	})
 
-	// Apply logger middleware
-	loggerMiddleware := Logger(logger)
-	wrappedHandler := loggerMiddleware(handler)
-
-	// Test request
+	wrappedHandler := Logger(logger)(handler)
 	req := httptest.NewRequest("GET", "/test?param=value", nil)
 	req.Header.Set("User-Agent", "test-agent")
 	rr := httptest.NewRecorder()
 
 	wrappedHandler.ServeHTTP(rr, req)
 
-	// Verify response
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, "OK", rr.Body.String())
 
-	// Verify log output contains expected fields
 	logOutput := buf.String()
 	assert.Contains(t, logOutput, "HTTP request")
 	assert.Contains(t, logOutput, "GET")
@@ -86,35 +73,24 @@ func TestLogger(t *testing.T) {
 }
 
 func TestRecovery(t *testing.T) {
-	// Create buffer to capture log output
 	var buf bytes.Buffer
-	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	// Mock handler that panics
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	})
 
-	// Apply recovery middleware
-	recoveryMiddleware := Recovery(logger)
-	wrappedHandler := recoveryMiddleware(handler)
-
-	// Test request
+	wrappedHandler := Recovery(logger)(handler)
 	req := httptest.NewRequest("GET", "/panic", nil)
 	rr := httptest.NewRecorder()
 
-	// This should not panic due to recovery middleware
 	assert.NotPanics(t, func() {
 		wrappedHandler.ServeHTTP(rr, req)
 	})
 
-	// Verify response
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	assert.Equal(t, "Internal Server Error\n", rr.Body.String())
 
-	// Verify panic was logged
 	logOutput := buf.String()
 	assert.Contains(t, logOutput, "Panic recovered")
 	assert.Contains(t, logOutput, "test panic")
@@ -122,14 +98,12 @@ func TestRecovery(t *testing.T) {
 }
 
 func TestCORS(t *testing.T) {
-	// Mock handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
+		_, err := w.Write([]byte("OK"))
+		require.NoError(t, err)
 	})
 
-	// Apply CORS middleware
-	corsMiddleware := CORS()
-	wrappedHandler := corsMiddleware(handler)
+	wrappedHandler := CORS()(handler)
 
 	t.Run("regular request", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
@@ -137,7 +111,6 @@ func TestCORS(t *testing.T) {
 
 		wrappedHandler.ServeHTTP(rr, req)
 
-		// Verify CORS headers
 		assert.Equal(t, "*", rr.Header().Get("Access-Control-Allow-Origin"))
 		assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", rr.Header().Get("Access-Control-Allow-Methods"))
 		assert.Equal(t, "Content-Type, Authorization", rr.Header().Get("Access-Control-Allow-Headers"))
@@ -150,7 +123,6 @@ func TestCORS(t *testing.T) {
 
 		wrappedHandler.ServeHTTP(rr, req)
 
-		// Verify CORS headers
 		assert.Equal(t, "*", rr.Header().Get("Access-Control-Allow-Origin"))
 		assert.Equal(t, http.StatusNoContent, rr.Code)
 		assert.Empty(t, rr.Body.String())
@@ -158,62 +130,44 @@ func TestCORS(t *testing.T) {
 }
 
 func TestResponseWriter(t *testing.T) {
-	// Create a mock ResponseWriter
 	rr := httptest.NewRecorder()
 	rw := &responseWriter{
 		ResponseWriter: rr,
 		statusCode:     http.StatusOK,
 	}
 
-	// Test WriteHeader
 	rw.WriteHeader(http.StatusCreated)
 	assert.Equal(t, http.StatusCreated, rw.statusCode)
 	assert.Equal(t, http.StatusCreated, rr.Code)
 
-	// Test Write
 	data := []byte("test data")
 	n, err := rw.Write(data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, len(data), n)
 	assert.Equal(t, "test data", rr.Body.String())
 }
 
 func TestMultipleMiddleware(t *testing.T) {
-	// Create buffer to capture log output
 	var buf bytes.Buffer
-	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	// Mock handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, err := w.Write([]byte("OK"))
+		require.NoError(t, err)
 	})
 
-	// Chain multiple middlewares
-	chainedHandler := Chain(
-		handler,
-		Logger(logger),
-		Recovery(logger),
-		CORS(),
-	)
-
-	// Test request
+	chainedHandler := Chain(handler, Logger(logger), Recovery(logger), CORS())
 	req := httptest.NewRequest("POST", "/api/test", strings.NewReader(`{"test": "data"}`))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	chainedHandler.ServeHTTP(rr, req)
 
-	// Verify response
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, "OK", rr.Body.String())
-
-	// Verify CORS headers
 	assert.Equal(t, "*", rr.Header().Get("Access-Control-Allow-Origin"))
 
-	// Verify logging occurred
 	logOutput := buf.String()
 	assert.Contains(t, logOutput, "HTTP request")
 	assert.Contains(t, logOutput, "POST")
