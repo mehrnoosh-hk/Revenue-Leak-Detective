@@ -11,8 +11,8 @@ import (
 // Config holds the application configuration
 type Config struct {
 	Port     string     `json:"port"`
-	LogLevel slog.Level `json:"log_level"`
 	Env      string     `json:"environment"`
+	LogLevel slog.Level `json:"log_level"`
 }
 
 // LoadConfig loads the configuration from environment variables with validation
