@@ -80,7 +80,7 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("invalid log level", func(t *testing.T) {
-		
+
 		require.NoError(t, os.Setenv("LOG_LEVEL", "INVALID"))
 
 		_, err := LoadConfig()
