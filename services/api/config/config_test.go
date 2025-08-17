@@ -80,7 +80,9 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("invalid log level", func(t *testing.T) {
-
+		// Clear other env vars to avoid interference
+		require.NoError(t, os.Unsetenv("API_PORT"))
+		require.NoError(t, os.Unsetenv("ENVIRONMENT"))
 		require.NoError(t, os.Setenv("LOG_LEVEL", "INVALID"))
 
 		_, err := LoadConfig()
