@@ -1,4 +1,4 @@
-version: "v2"
+version: "2"
 
 run:
   timeout: 5m
@@ -37,7 +37,7 @@ linters:
           disabled: false
           exclude: [""]
           arguments:
-            - allow-regex: "^(_|r)$"         
+            - allow-regex: "^(_|r|w)$"         
     errcheck:
       check-type-assertions: true
       check-blank: true
