@@ -91,7 +91,7 @@ func (s *Server) Start(ctx context.Context) error {
 	case sig := <-quit:
 		s.logger.Info("Shutting down server", slog.String("signal", sig.String()))
 	case <-ctx.Done():
-		s.logger.Info("Shutting down server", slog.String("reason", "context cancelled"))
+		s.logger.Info("Shutting down server", slog.String("reason", "context canceled"))
 	}
 
 	// Graceful shutdown with timeout
