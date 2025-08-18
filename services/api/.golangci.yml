@@ -1,9 +1,26 @@
+version: "v2"
+
 run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
 
 linters:
+  enable:
+    - revive  # replaces golint
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unused
+    - errcheck
+    - bodyclose
+    - gosec
+    - unconvert
+    - unparam
+  disable:
+    - err113  # too strict for error wrapping
+    - depguard  # disabled due to configuration issues with local imports
   settings:
     depguard:
       rules:
@@ -30,22 +47,6 @@ linters:
         - shadow
     misspell:
       locale: US
-
-  enable:
-    - revive  # replaces golint
-    - govet
-    - ineffassign
-    - misspell
-    - staticcheck
-    - unused
-    - errcheck
-    - bodyclose
-    - gosec
-    - unconvert
-    - unparam
-  disable:
-    - err113  # too strict for error wrapping
-    - depguard  # disabled due to configuration issues with local imports
 
 formatters:
   enable:
