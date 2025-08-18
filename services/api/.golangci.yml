@@ -15,7 +15,6 @@ linters:
             - rdl-api
             - github.com/stretchr/testify
     revive:
-      min-confidence: 0.8
       severity: error
       rules:
         - name: unused-parameter
@@ -58,6 +57,5 @@ formatters:
     - goimports
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
