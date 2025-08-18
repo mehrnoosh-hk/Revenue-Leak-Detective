@@ -19,12 +19,8 @@ linters:
           severity: warning
           disabled: false
           exclude: [""]
-          - name: unused-parameter
-            severity: warning
-            disabled: false
-            exclude: [""]
-            arguments:
-              - allow-regex: "^(_|r)$"         
+          arguments:
+            - allow-regex: "^(_|r)$"         
     errcheck:
       check-type-assertions: true
       check-blank: true
