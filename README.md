@@ -1,13 +1,14 @@
-# Revenue Leak Detective
+# 📘 Revenue Leak Detective
 
 <a href="https://codecov.io/gh/mehrnoosh-hk/Revenue-Leak-Detective" > 
  <img src="https://codecov.io/gh/mehrnoosh-hk/Revenue-Leak-Detective/graph/badge.svg?token=VG56BUUMW7"/> 
  </a>
 
-A production-grade Go microservice for detecting revenue leaks in business operations.
+An agent that hunts down money leaks in a SaaS: failed charges, paused subscriptions, coupon misuse, “trial forever” zombies, and quiet churn signals (no logins + downgrades). It triages issues, suggests fixes, drafts customer outreach, and files tasks automatically.
+
+---
 
 ## 🚀 Features
-
 - **High-Performance API**: Built with Go's standard library for optimal performance
 - **Structured Logging**: Using Go's native slog package for structured, leveled logging
 - **Health Monitoring**: Comprehensive health check endpoints with detailed status reporting
@@ -16,18 +17,29 @@ A production-grade Go microservice for detecting revenue leaks in business opera
 - **Docker Ready**: Multi-stage Dockerfile for production deployments
 - **Test Coverage**: Comprehensive test suite with benchmarks
 - **Security**: Built-in security best practices and vulnerability scanning
+---
+
+<!-- ## 🛠️ Installation
+```bash
+# Clone the repository
+git clone 
+
+# Navigate into the project
+cd Revenue-Leak-Detective -->
+
+
 
 ## 📋 Prerequisites
 
 - Go 1.23.2 or higher
 - Docker (optional, for containerized deployment)
-- Make (for using the Makefile)
+---
 
 ## 🛠️ Installation
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/mehrnoosh-hk/Revenue-Leak-Detective.git
    cd Revenue-Leak-Detective
    ```
 
@@ -220,16 +232,16 @@ The service is designed to be easily extended with metrics collection using:
 - Non-root container execution
 - Static binary with minimal attack surface
 
-### Security Scanning
+<!-- ### Security Scanning
 
 ```bash
 # Run security vulnerability scan
 make security
-```
+``` -->
 
-## 🚀 Production Deployment
+<!-- ## 🚀 Production Deployment -->
 
-### Docker
+<!-- ### Docker
 
 ```bash
 # Build production image
@@ -273,7 +285,7 @@ spec:
             port: 8080
           initialDelaySeconds: 10
           periodSeconds: 30
-```
+``` -->
 
 ## 🤝 Contributing
 
@@ -286,7 +298,7 @@ spec:
 
 ### Development Guidelines
 
-- Follow Go best practices and idioms
+- Follow Go and Python best practices and idioms
 - Write tests for new functionality
 - Update documentation as needed
 - Run `make all` before committing
@@ -306,4 +318,4 @@ For support and questions:
 
 ---
 
-**Built with ❤️ using Go**
+**Built with ❤️ using Go and Python**
