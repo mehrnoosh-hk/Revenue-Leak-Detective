@@ -1,6 +1,59 @@
 version: '3.8'
 
 services:
+  # Go API Service
+  api:
+    build:
+      context: ../../
+      dockerfile: deploy/docker/Dockerfile.api
+      args:
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-unknown}
+        DATE: ${DATE:-unknown}
+    container_name: revenue-leak-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../../.env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - revenue-leak-network
+    healthcheck:
+      test: ["/main", "--health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # Python Workers Service
+  workers:
+    build:
+      context: ../../
+      dockerfile: deploy/docker/Dockerfile.workers
+    container_name: revenue-leak-workers
+    env_file:
+      - ../../.env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - revenue-leak-network
+    healthcheck:
+      test: ["python", "-m", "agent", "--dry-run"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+  # Database
   postgres:
     image: postgres:15-alpine
     container_name: revenue-leak-postgres
@@ -20,6 +73,7 @@ services:
       timeout: 10s
       retries: 5
 
+  # Cache/Queue
   redis:
     image: redis:7-alpine
     container_name: revenue-leak-redis
