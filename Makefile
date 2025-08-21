@@ -55,7 +55,7 @@ GOLINT_CONFIG := $(API_SERVICE_PATH)/.golangci.yml
 .PHONY: help all clean validate-env check-tools
 .PHONY: api-build api-build-local api-clean api-test api-test-coverage 
 .PHONY: api-benchmark api-lint api-fmt api-fmt-check api-vet api-deps api-security api-all
-.PHONY: workers-test workers-lint workers-format workers-install workers-all
+.PHONY: workers-test workers-lint workers-format workers-deps workers-all
 .PHONY: api-docker-build api-docker-run workers-docker-build workers-docker-run
 .PHONY: docker-build-all docker-compose-up docker-compose-down docker-compose-logs
 .PHONY: dev install-tools
@@ -185,6 +185,11 @@ api-security:
 	@cd $(API_SERVICE_PATH) && go run github.com/securego/gosec/v2/cmd/gosec@latest ./... && \
 		printf "$(GREEN)✓ API security scan passed$(NC)\n"
 
+## api-run: Run the API service
+api-run:
+	@printf "$(GREEN) Running the API server...$(NC)\n"
+	@cd $(API_SERVICE_PATH) && go run ./cmd/main.go
+
 ## api-all: Run all API quality checks
 api-all: api-fmt api-fmt-check api-vet api-lint api-test api-test-coverage api-deps api-security
 
@@ -192,8 +197,8 @@ api-all: api-fmt api-fmt-check api-vet api-lint api-test api-test-coverage api-d
 # Workers Service Targets (Python)
 # =============================================================================
 
-## workers-install: Install workers dependencies
-workers-install:
+## workers-deps: Install workers dependencies
+workers-deps:
 	@printf "$(BLUE)📦 Installing workers dependencies...$(NC)\n"
 	cd $(WORKERS_SERVICE_PATH) && uv sync
 	@printf "$(GREEN)✓ Workers dependencies installed$(NC)\n"
@@ -234,6 +239,14 @@ workers-run-dry:
 
 ## workers-all: Run all workers quality checks
 workers-all: workers-format workers-format-check workers-lint workers-test
+
+
+# =============================================================================
+# API and Workers Service Simentanious Targets
+# =============================================================================
+
+## deps: install dependencies for both services
+deps: api-deps workers-deps
 
 # =============================================================================
 # Docker Targets
