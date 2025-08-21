@@ -44,11 +44,19 @@ cd Revenue-Leak-Detective -->
    ```
 
 2. **Install dependencies**:
+Install all dependencies
    ```bash
    make deps
    ```
+   Or install each services dependencies seperately
+
+   ```bash
+   make api-deps
+   make workers-deps
+   ```
 
 3. **Install development tools** (optional):
+This command installs development tools such as golangci-lint, ...
    ```bash
    make install-tools
    ```
@@ -65,12 +73,13 @@ cd Revenue-Leak-Detective -->
 
 2. **Run the application**:
    ```bash
-   make dev
+   make api-run
+   make workers-run
    ```
 
    Or manually:
    ```bash
-   make build-local
+   make api-build-local
    ./bin/rld-api
    ```
 
@@ -78,13 +87,15 @@ cd Revenue-Leak-Detective -->
 
 1. **Build and run with Docker**:
    ```bash
-   make docker-build
-   make docker-run
+   make api-docker-build #Build Docker image for Go API service
+   make api-docker-run #Run Docker container for Go API service
+   make workers-docker-build #Build Docker image for Workers service
+   make workers-docker-run #Run Docker container for Workers service
    ```
 
 2. **Or use docker-compose for full stack**:
    ```bash
-   docker-compose -f deploy/dev/docker-compose.yml up
+   make docker-compose-up
    ```
 
 ## 🏗️ Project Structure
@@ -106,10 +117,14 @@ cd Revenue-Leak-Detective -->
 │           │   └── middleware.go
 │           └── server/             # Server implementation
 │               └── server.go
-├── workers/                        # Background workers (Python)
+├── workers/
+│   ├── src/
+│   │   └── agent/                    # Workers entrypoints
+│   └── tests/                        # Workers Test folder
 ├── deploy/
 │   ├── docker/
-│   │   └── Dockerfile
+│   │   ├── Dockerfile.api
+│   │   └── docker-compose.yml
 │   └── dev/
 │       └── docker-compose.yml
 ├── .golangci.yml                   # Linting configuration
