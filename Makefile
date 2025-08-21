@@ -131,7 +131,8 @@ api-clean:
 ## api-test: Run tests for the API service
 api-test:
 	@printf "$(CYAN)🧪 Running API tests...$(NC)\n"
-	cd $(API_SERVICE_PATH) && go test -v -race -timeout 30s ./...
+	@cd $(API_SERVICE_PATH) && go test -v -race -timeout 30s ./... && \
+        printf "$(GREEN)✓ All tests passed$(NC)\n"
 
 ## api-test-coverage: Run API tests with coverage
 api-test-coverage:
@@ -144,16 +145,19 @@ api-test-coverage:
 api-benchmark:
 	@printf "$(MAGENTA)⚡ Running API benchmarks...$(NC)\n"
 	cd $(API_SERVICE_PATH) && go test -bench=. -benchmem ./...
+	@printf "$(GREEN)✓ API benchmarks completed$(NC)\n"
 
 ## api-lint: Run linter for the API service
 api-lint:
 	@printf "$(CYAN)🔍 Running API linter...$(NC)\n"
-	cd $(API_SERVICE_PATH) && golangci-lint run --config .golangci.yml
+	@cd $(API_SERVICE_PATH) && golangci-lint run --config .golangci.yml && \
+		printf "$(GREEN)✓ API linting passed$(NC)\n"
 
 ## api-fmt: Format Go code in API service
 api-fmt:
 	@printf "$(YELLOW)🎨 Formatting API code...$(NC)\n"
 	cd $(API_SERVICE_PATH) && gofmt -s -w .
+	@printf "$(GREEN)✓ API code formatted$(NC)\n"
 
 ## api-fmt-check: Check if API code is formatted
 api-fmt-check:
@@ -164,7 +168,8 @@ api-fmt-check:
 ## api-vet: Run go vet for the API service
 api-vet:
 	@printf "$(YELLOW)🔎 Running API vet analysis...$(NC)\n"
-	cd $(API_SERVICE_PATH) && go vet ./...
+	@cd $(API_SERVICE_PATH) && go vet ./... && \
+		printf "$(GREEN)✓ API vet analysis passed$(NC)\n"
 
 ## api-deps: Download and verify API dependencies
 api-deps:
@@ -177,7 +182,8 @@ api-deps:
 ## api-security: Run security scan for the API service
 api-security:
 	@printf "$(RED)🔒 Running API security scan...$(NC)\n"
-	cd $(API_SERVICE_PATH) && go run github.com/securego/gosec/v2/cmd/gosec@latest ./...
+	@cd $(API_SERVICE_PATH) && go run github.com/securego/gosec/v2/cmd/gosec@latest ./... && \
+		printf "$(GREEN)✓ API security scan passed$(NC)\n"
 
 ## api-all: Run all API quality checks
 api-all: api-fmt api-fmt-check api-vet api-lint api-test api-test-coverage api-deps api-security
@@ -195,22 +201,26 @@ workers-install:
 ## workers-test: Run tests for the workers service
 workers-test:
 	@printf "$(CYAN)🧪 Running workers tests...$(NC)\n"
-	cd $(WORKERS_SERVICE_PATH) && uv run pytest tests/ -v
+	@cd $(WORKERS_SERVICE_PATH) && uv run pytest tests/ -v && \
+		printf "$(GREEN)✓ All workers tests passed$(NC)\n"
 
 ## workers-lint: Run linting for the workers service
 workers-lint:
 	@printf "$(CYAN)🔍 Running workers linter...$(NC)\n"
-	cd $(WORKERS_SERVICE_PATH) && uv run ruff check .
+	@cd $(WORKERS_SERVICE_PATH) && uv run ruff check . && \
+		printf "$(GREEN)✓ Workers linting passed$(NC)\n"
 
 ## workers-format: Format workers code
 workers-format:
 	@printf "$(YELLOW)🎨 Formatting workers code...$(NC)\n"
 	cd $(WORKERS_SERVICE_PATH) && uv run ruff format .
+	@printf "$(GREEN)✓ Workers code formatted$(NC)\n"
 
 ## workers-format-check: Check workers code formatting
 workers-format-check:
 	@printf "$(YELLOW)📋 Checking workers code formatting...$(NC)\n"
-	cd $(WORKERS_SERVICE_PATH) && uv run ruff format --check .
+	@cd $(WORKERS_SERVICE_PATH) && uv run ruff format --check . && \
+		printf "$(GREEN)✓ Workers code formatting is correct$(NC)\n"
 
 ## workers-run: Run the workers agent
 workers-run:
