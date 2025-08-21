@@ -242,16 +242,16 @@ workers-all: workers-format workers-format-check workers-lint workers-test
 ## api-docker-build: Build Docker image for Go API service
 api-docker-build:
 	@printf "$(BLUE)Building Docker image for API service...$(NC)\n"
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) -f deploy/docker/Dockerfile.api \
+	docker build -t $(API_DOCKER_IMAGE):$(DOCKER_TAG) -f deploy/docker/Dockerfile.api \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg DATE=$(DATE) .
-	@printf "$(GREEN)✓ API Docker image built: $(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)\n"
+	@printf "$(GREEN)✓ API Docker image built: $(API_DOCKER_IMAGE):$(DOCKER_TAG)$(NC)\n"
 
 ## api-docker-run: Run Docker container for Go API service
 api-docker-run:
 	@printf "$(BLUE)Running API Docker container...$(NC)\n"
-	docker run -p 8080:8080 --env-file .env.dev $(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker run -p 8080:8080 --env-file .env.dev $(API_DOCKER_IMAGE):$(DOCKER_TAG)
 
 ## workers-docker-build: Build Docker image for Python workers service
 workers-docker-build:
