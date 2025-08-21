@@ -19,17 +19,18 @@ COPY workers/pyproject.toml workers/uv.lock ./
 COPY workers/src/ ./src/
 COPY workers/README.md ./README.md
 
-# Install dependencies using uv sync (works with uv.lock format)
+# Install dependencies and the package itself using uv sync (works with uv.lock format)
 RUN uv sync --frozen --no-dev
 
-# Create a non-root user
-RUN groupadd -r worker && useradd -r -g worker worker
+# Create a non-root user and set up cache directory
+RUN groupadd -r worker && useradd -r -g worker worker -m
+RUN mkdir -p /home/worker/.cache/uv && chown -R worker:worker /home/worker/.cache
 RUN chown -R worker:worker /app
 USER worker
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -m agent --dry-run || exit 1
+    CMD uv run python -m agent --dry-run || exit 1
 
 # Default command to run the agent
-ENTRYPOINT ["python", "-m", "agent"]
+ENTRYPOINT ["uv", "run", "python", "-m", "agent"]
