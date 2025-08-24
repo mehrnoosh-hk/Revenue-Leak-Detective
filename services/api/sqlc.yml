@@ -2,8 +2,16 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "./internal/db/queries"
-    schema: ./db/migrations"
+    # services/api/sqlc.yml
+
+    # …
+    schema: "./db/migrations/*.up.sql"
+    # …
     gen:
       go:
         out: "./internal/db/sqlc"
+        package: "db"
         sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: true
+        emit_interface: true
