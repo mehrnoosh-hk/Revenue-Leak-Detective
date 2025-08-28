@@ -58,11 +58,12 @@ services:
     image: postgres:15-alpine
     container_name: revenue-leak-postgres
     environment:
-      POSTGRES_DB: revenue_leak_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # Database configuration - can be overridden in .env.dev
+      POSTGRES_DB: ${POSTGRES_DB:-revenue_leak_detective_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
-      - "5432:5432"
+      - ${POSTGRES_PORT:-5432}:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -78,7 +79,7 @@ services:
     image: redis:7-alpine
     container_name: revenue-leak-redis
     ports:
-      - "6379:6379"
+      - ${REDIS_PORT:-6379}:6379
     volumes:
       - redis_data:/data
     networks:
