@@ -11,6 +11,7 @@ install-tools:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install github.com/securego/gosec/v2/cmd/gosec@latest
 	@go install github.com/cosmtrek/air@latest
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	@printf "$(GREEN)✓ Development tools installed$(NC)\n"
 
@@ -19,6 +20,8 @@ check-tools:
 	@printf "$(BLUE)Checking required tools...$(NC)\n"
 	@command -v go >/dev/null || (printf "$(RED)❌ Go not installed$(NC)\n" && exit 1)
 	@command -v docker >/dev/null || (printf "$(RED)❌ Docker not installed$(NC)\n" && exit 1)
+	@command -v sqlc >/dev/null || (printf "$(RED)❌ sqlc not installed$(NC)\n" && exit 1)
+	@command -v migrate >/dev/null || (printf "$(RED)❌ golang-migrate not installed$(NC)\n" && exit 1)
 	@command -v uv >/dev/null || printf "$(YELLOW)⚠️  UV not installed (required for workers development)$(NC)\n"
 	@printf "$(GREEN)✓ Required tools available$(NC)\n"
 
