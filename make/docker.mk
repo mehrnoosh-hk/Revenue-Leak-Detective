@@ -10,33 +10,37 @@
 api-docker-build:
 	@printf "$(BLUE)Building Docker image for API service...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
-	@source $(ENV_FILE) && \
-		docker build -t $${API_DOCKER_IMAGE:-$(API_DOCKER_IMAGE)}:$${DOCKER_TAG:-$(DOCKER_TAG)} -f deploy/docker/Dockerfile.api \
+	@. $(ENV_FILE) && \
+		RESOLVED_IMAGE="$${API_DOCKER_IMAGE:-$(API_DOCKER_IMAGE)}" && \
+		RESOLVED_TAG="$${DOCKER_TAG:-$(DOCKER_TAG)}" && \
+		docker build -t $$RESOLVED_IMAGE:$$RESOLVED_TAG -f deploy/docker/Dockerfile.api \
 			--build-arg VERSION=$(VERSION) \
 			--build-arg COMMIT=$(COMMIT) \
-			--build-arg DATE=$(DATE) .
-	@printf "$(GREEN)✓ API Docker image built: $(API_DOCKER_IMAGE):$(DOCKER_TAG)$(NC)\n"
+			--build-arg DATE=$(DATE) . && \
+		printf "$(GREEN)✓ API Docker image built: $$RESOLVED_IMAGE:$$RESOLVED_TAG$(NC)\n"
 
 ## api-docker-run: Run Docker container for Go API service
 api-docker-run:
 	@printf "$(BLUE)Running API Docker container...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		docker run -p 8080:8080 --env-file $(ENV_FILE) $${API_DOCKER_IMAGE:-$(API_DOCKER_IMAGE)}:$${DOCKER_TAG:-$(DOCKER_TAG)}
 
 ## workers-docker-build: Build Docker image for Python workers service
 workers-docker-build:
 	@printf "$(BLUE)Building Docker image for workers service...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
-	@source $(ENV_FILE) && \
-		docker build -t $${WORKERS_DOCKER_IMAGE:-$(WORKERS_DOCKER_IMAGE)}:$${DOCKER_TAG:-$(DOCKER_TAG)} -f deploy/docker/Dockerfile.workers .
-	@printf "$(GREEN)✓ Workers Docker image built: $(WORKERS_DOCKER_IMAGE):$(DOCKER_TAG)$(NC)\n"
+	@. $(ENV_FILE) && \
+		RESOLVED_IMAGE="$${WORKERS_DOCKER_IMAGE:-$(WORKERS_DOCKER_IMAGE)}" && \
+		RESOLVED_TAG="$${DOCKER_TAG:-$(DOCKER_TAG)}" && \
+		docker build -t $$RESOLVED_IMAGE:$$RESOLVED_TAG -f deploy/docker/Dockerfile.workers . && \
+		printf "$(GREEN)✓ Workers Docker image built: $$RESOLVED_IMAGE:$$RESOLVED_TAG$(NC)\n"
 
 ## workers-docker-run: Run Docker container for workers service
 workers-docker-run:
 	@printf "$(BLUE)Running workers Docker container...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		docker run --env-file $(ENV_FILE) $${WORKERS_DOCKER_IMAGE:-$(WORKERS_DOCKER_IMAGE)}:$${DOCKER_TAG:-$(DOCKER_TAG)}
 
 ## docker-build-all: Build both Docker images
@@ -46,7 +50,7 @@ docker-build-all: api-docker-build workers-docker-build
 docker-compose-up:
 	@printf "$(BLUE)Starting all services with docker-compose...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		export VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) \
 			POSTGRES_DB="$$POSTGRES_DB" \
 			POSTGRES_USER="$$POSTGRES_USER" \
