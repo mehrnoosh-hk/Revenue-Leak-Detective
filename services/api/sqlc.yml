@@ -5,7 +5,7 @@ sql:
     # services/api/sqlc.yml
 
     # …
-    schema: "./db/migrations/*.up.sql"
+    schema: "./migrations/*.up.sql"
     # …
     gen:
       go:
