@@ -10,14 +10,14 @@
 ## api-build: Build the API service for production (Linux)
 api-build: validate-env
 	@printf "$(BLUE)Building $(API_BINARY_NAME)...$(NC)\n"
-	@mkdir -p bin
+	@mkdir -p $(dir $(API_BINARY_PATH))
 	cd $(API_SERVICE_PATH) && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o ../../$(API_BINARY_PATH) $(API_MAIN_PATH)
 	@printf "$(GREEN)✓ Build complete: $(API_BINARY_PATH)$(NC)\n"
 
 ## api-build-local: Build API service for local development
 api-build-local: validate-env
 	@printf "$(BLUE)Building $(API_BINARY_NAME) for local development...$(NC)\n"
-	@mkdir -p bin
+	@mkdir -p $(dir $(API_BINARY_PATH))
 	cd $(API_SERVICE_PATH) && go build $(LDFLAGS) -o ../../$(API_BINARY_PATH) $(API_MAIN_PATH)
 	@printf "$(GREEN)✓ Local build complete: $(API_BINARY_PATH)$(NC)\n"
 
