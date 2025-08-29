@@ -40,6 +40,7 @@ LDFLAGS := -ldflags "-X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main
 # Docker configuration
 DOCKER_TAG ?= latest
 DOCKER_COMPOSE_FILE := deploy/dev/docker-compose.yml
+DOCKER_COMPOSE_CMD ?= docker compose
 
 # Tool configuration
 GOLINT_CONFIG := $(API_SERVICE_PATH)/.golangci.yml

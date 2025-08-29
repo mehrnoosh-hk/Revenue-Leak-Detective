@@ -12,9 +12,11 @@ services:
         DATE: ${DATE:-unknown}
     container_name: revenue-leak-api
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:8080"
     env_file:
       - ../../.env.dev
+    environment:
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-revenue_leak_detective_dev}
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +39,8 @@ services:
     container_name: revenue-leak-workers
     env_file:
       - ../../.env.dev
+    environment:
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-revenue_leak_detective_dev}
     depends_on:
       postgres:
         condition: service_healthy

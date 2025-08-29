@@ -51,18 +51,15 @@ docker-compose-up:
 	@printf "$(BLUE)Starting all services with docker-compose...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
 	@. $(ENV_FILE) && \
-		export VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) \
-			POSTGRES_DB="$$POSTGRES_DB" \
-			POSTGRES_USER="$$POSTGRES_USER" \
-			POSTGRES_PASSWORD="$$POSTGRES_PASSWORD" && \
-		docker-compose -f $(DOCKER_COMPOSE_FILE) up --build
+		export VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) && \
+		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) up --build
 
 ## docker-compose-down: Stop all services
 docker-compose-down:
 	@printf "$(YELLOW)Stopping all services...$(NC)\n"
-	docker-compose -f $(DOCKER_COMPOSE_FILE) down
+	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) down
 
 ## docker-compose-logs: View logs from all services
 docker-compose-logs:
 	@printf "$(CYAN)Viewing logs from all services...$(NC)\n"
-	docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f
+	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) logs -f
