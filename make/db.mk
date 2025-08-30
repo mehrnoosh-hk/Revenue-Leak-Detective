@@ -17,12 +17,12 @@ _validate-env:
 
 # Validate POSTGRES_URL is set
 _validate-postgres-url: _validate-env
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		test -n "$$POSTGRES_URL" || (printf "$(RED)❌ POSTGRES_URL not set in $(ENV_FILE)$(NC)\n" && exit 1)
 
 # Validate environment is development/dev for destructive operations
 _validate-dev-env: _validate-postgres-url
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		test -n "$$ENVIRONMENT" || (printf "$(RED)❌ ENVIRONMENT not set in $(ENV_FILE)$(NC)\n" && exit 1) && \
 		(echo "$$ENVIRONMENT" | grep -E "^(development|dev)$$" > /dev/null) || (printf "$(RED)❌ This command is only allowed in development or dev environment. Current: $$ENVIRONMENT$(NC)\n" && exit 1)
 
@@ -33,7 +33,7 @@ _validate-dev-env: _validate-postgres-url
 ## migrate-up: Apply all database migrations
 migrate-up: _validate-postgres-url
 	@printf "$(BLUE)⬆️  Applying database migrations...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" up && \
 		printf "$(GREEN)✓ Database migrations applied$(NC)\n"
@@ -41,7 +41,7 @@ migrate-up: _validate-postgres-url
 ## migrate-down: Rollback last database migration
 migrate-down: _validate-postgres-url
 	@printf "$(YELLOW)⬇️  Rolling back last database migration...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" down 1 && \
 		printf "$(GREEN)✓ Last migration rolled back$(NC)\n"
@@ -50,7 +50,7 @@ migrate-down: _validate-postgres-url
 migrate-up-step: _validate-postgres-url
 	@test -n "$(STEPS)" || (printf "$(RED)❌ STEPS is required. Usage: make migrate-up-step STEPS=1$(NC)\n" && exit 1)
 	@printf "$(BLUE)⬆️  Applying $(STEPS) migration step(s)...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" up $(STEPS) && \
 		printf "$(GREEN)✓ $(STEPS) migration step(s) applied$(NC)\n"
@@ -59,7 +59,7 @@ migrate-up-step: _validate-postgres-url
 migrate-down-step: _validate-postgres-url
 	@test -n "$(STEPS)" || (printf "$(RED)❌ STEPS is required. Usage: make migrate-down-step STEPS=1$(NC)\n" && exit 1)
 	@printf "$(YELLOW)⬇️  Rolling back $(STEPS) migration step(s)...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" down $(STEPS) && \
 		printf "$(GREEN)✓ $(STEPS) migration step(s) rolled back$(NC)\n"
@@ -67,7 +67,7 @@ migrate-down-step: _validate-postgres-url
 ## migrate-version: Show current migration version
 migrate-version: _validate-postgres-url
 	@printf "$(BLUE)📊 Checking migration version...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" version
 
@@ -75,7 +75,7 @@ migrate-version: _validate-postgres-url
 migrate-force: _validate-postgres-url
 	@test -n "$(VERSION)" || (printf "$(RED)❌ VERSION is required. Usage: make migrate-force VERSION=1$(NC)\n" && exit 1)
 	@printf "$(RED)⚠️  Force setting migration version to $(VERSION)...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" force $(VERSION) && \
 		printf "$(GREEN)✓ Migration version forced to $(VERSION)$(NC)\n"
@@ -109,7 +109,7 @@ sqlc:
 ## db-reset: Drop and recreate database (development/dev environments only)
 db-reset: _validate-dev-env
 	@printf "$(RED)⚠️  Dropping and recreating database...$(NC)\n"
-	@source $(ENV_FILE) && \
+	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" drop && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" up && \
