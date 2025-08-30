@@ -9,3 +9,7 @@ When adding new queries:
 - Avoid `SELECT *`; list columns explicitly for sqlc stability.
 - Add ORDER BY for deterministic reads; paginate for large result sets.
 - Use `:execrows` when the affected row count matters.
+
+Avoid SELECT ; return explicit columns for stability and forward-compatibility.
+
+Using SELECT * couples generated code to schema changes and can break sqlc on column/order changes. Prefer explicit column lists across reads/updates.
