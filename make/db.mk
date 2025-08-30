@@ -111,6 +111,6 @@ db-reset: _validate-dev-env
 	@printf "$(RED)⚠️  Dropping and recreating database...$(NC)\n"
 	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
-		migrate -path ./migrations -database "$$POSTGRES_URL" drop && \
+		migrate -path ./migrations -database "$$POSTGRES_URL" drop -f && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" up && \
 		printf "$(GREEN)✓ Database dropped and recreated$(NC)\n"
