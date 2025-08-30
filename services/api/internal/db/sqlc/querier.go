@@ -12,7 +12,7 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	GetAllUsers(ctx context.Context) ([]User, error)
 	// users table queries
 	GetUserByEmail(ctx context.Context, email string) (User, error)
