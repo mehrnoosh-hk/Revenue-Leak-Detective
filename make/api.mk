@@ -85,8 +85,6 @@ api-security:
 	@cd $(API_SERVICE_PATH) && go run github.com/securego/gosec/v2/cmd/gosec@latest ./... && \
 		printf "$(GREEN)✓ API security scan passed$(NC)\n"
 
-
-
 ## api-run: Run the API service
 api-run:
 	@printf "$(GREEN) Running the API server...$(NC)\n"
