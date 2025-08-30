@@ -52,14 +52,14 @@ docker-compose-up:
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
 	@. $(ENV_FILE) && \
 		export VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) && \
-		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) up --build
+		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) --env-file $(ENV_FILE) up --build
 
 ## docker-compose-down: Stop all services
 docker-compose-down:
 	@printf "$(YELLOW)Stopping all services...$(NC)\n"
-	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) down
+	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) --env-file $(ENV_FILE) down
 
 ## docker-compose-logs: View logs from all services
 docker-compose-logs:
 	@printf "$(CYAN)Viewing logs from all services...$(NC)\n"
-	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) logs -f
+	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) --env-file $(ENV_FILE) logs -f
