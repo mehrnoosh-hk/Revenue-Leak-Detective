@@ -23,6 +23,10 @@ func HealthCheckHandler(logger *slog.Logger) http.HandlerFunc {
 			return
 		}
 
+		if logger == nil {
+			logger = slog.Default()
+		}
+
 		logger.Debug("Health check endpoint accessed",
 			slog.String("remote_addr", r.RemoteAddr))
 
