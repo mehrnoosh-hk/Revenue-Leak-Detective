@@ -41,9 +41,9 @@ func TestHealthCheckHandler(t *testing.T) {
 
 		// Check that response contains status field
 		var gotBody struct {
-			Status string `json:"status"`
+			Status    string    `json:"status"`
 			Timestamp time.Time `json:"timestamp"`
-			Version string `json:"version"`
+			Version   string    `json:"version"`
 		}
 		if err := json.Unmarshal(rr.Body.Bytes(), &gotBody); err != nil {
 			t.Errorf("failed to unmarshal response body, invalid json: %v", err)
