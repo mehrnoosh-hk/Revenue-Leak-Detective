@@ -37,7 +37,7 @@ linters:
           disabled: false
           exclude: [""]
           arguments:
-            - allow-regex: "^(_|r|w)$"         
+            - allow-regex: "^(_|r|w|ctx)$"
     errcheck:
       check-type-assertions: true
       check-blank: true

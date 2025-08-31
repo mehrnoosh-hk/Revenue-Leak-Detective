@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
 
-		assert.Equal(t, "8080", cfg.Port)
+		assert.Equal(t, "3030", cfg.ServerConfig.Port)
 		assert.Equal(t, slog.LevelInfo, cfg.LogLevel)
 		assert.Equal(t, "development", cfg.Env)
 	})
@@ -58,7 +58,7 @@ func TestLoadConfig(t *testing.T) {
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
 
-		assert.Equal(t, "3000", cfg.Port)
+		assert.Equal(t, "3000", cfg.ServerConfig.Port)
 		assert.Equal(t, slog.LevelDebug, cfg.LogLevel)
 		assert.Equal(t, "production", cfg.Env)
 	})

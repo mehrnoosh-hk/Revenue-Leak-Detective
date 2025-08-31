@@ -15,7 +15,7 @@ type HealthResponse struct {
 }
 
 // HealthCheckHandler returns a health check handler
-func HealthCheckHandler(hd *HandlerDependencies) http.HandlerFunc {
+func HealthCheckHandler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Only allow GET requests
 		if r.Method != http.MethodGet {
@@ -23,7 +23,11 @@ func HealthCheckHandler(hd *HandlerDependencies) http.HandlerFunc {
 			return
 		}
 
-		hd.Logger.Debug("Health check endpoint accessed",
+		if logger == nil {
+			logger = slog.Default()
+		}
+
+		logger.Debug("Health check endpoint accessed",
 			slog.String("remote_addr", r.RemoteAddr))
 
 		response := HealthResponse{
@@ -36,7 +40,7 @@ func HealthCheckHandler(hd *HandlerDependencies) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 
 		if err := json.NewEncoder(w).Encode(response); err != nil {
-			hd.Logger.Error("Failed to encode health response",
+			logger.Error("Failed to encode health response",
 				slog.Any("error", err))
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return

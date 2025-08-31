@@ -7,7 +7,10 @@ import (
 	"log/slog"
 	"os"
 	"rdl-api/config"
-	"rdl-api/internal/server"
+	"rdl-api/internal/app"
+	"time"
+
+	"github.com/lmittmann/tint"
 )
 
 // Build info - TODO: Use build flags to set these values
@@ -41,12 +44,18 @@ func main() {
 
 	// Setup logger
 	handlerOptions := &slog.HandlerOptions{
-		Level: cfg.LogLevel,
+		AddSource: true,
+		Level:     cfg.LogLevel,
 	}
 
 	var logger *slog.Logger
 	if cfg.IsDevelopment() {
-		logger = slog.New(slog.NewTextHandler(os.Stdout, handlerOptions))
+		logger = slog.New(tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      cfg.LogLevel,
+			TimeFormat: time.RFC3339,
+			AddSource:  true,
+			NoColor:    false,
+		}))
 	} else {
 		logger = slog.New(slog.NewJSONHandler(os.Stdout, handlerOptions))
 	}
@@ -58,6 +67,10 @@ func main() {
 		slog.String("build_date", Date),
 		slog.String("environment", cfg.Env))
 
+	logger.Info("Initializing Application")
+
+	application := app.New(cfg, logger)
+
 	// TODO: Handle health check flag (for Docker health checks)
 	if *healthFlag {
 		// TODO:Perform health check logic here
@@ -65,12 +78,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Create and start server
-	srv := server.New(cfg, logger)
 	ctx := context.Background()
-
-	if err := srv.Start(ctx); err != nil {
-		logger.Error("Server failed to start or shutdown", "error", err)
+	if err := application.Start(ctx); err != nil {
+		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
 }

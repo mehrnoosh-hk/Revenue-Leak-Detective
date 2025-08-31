@@ -3,22 +3,46 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 )
 
+type ServerConfig struct {
+	Port string `json:"server_port"`
+}
+
+type DatabaseConfig struct {
+	DBPort     string `json:"db_port"`
+	DBHost     string `json:"db_host"`
+	DBUser     string `json:"db_user"`
+	DBPassword string `json:"db_password"`
+	DBName     string `json:"db_name"`
+}
+
 // Config holds the application configuration
 type Config struct {
-	Port     string     `json:"port"`
-	Env      string     `json:"environment"`
-	LogLevel slog.Level `json:"log_level"`
+	ServerConfig   ServerConfig   `json:"server_config"`
+	DatabaseConfig DatabaseConfig `json:"database_config"`
+	Env            string         `json:"environment"`
+	LogLevel       slog.Level     `json:"log_level"`
 }
 
 // LoadConfig loads the configuration from environment variables with validation
 func LoadConfig() (*Config, error) {
 	config := &Config{
-		Port:     "8080",         // Default port
+		ServerConfig: ServerConfig{
+			Port: "3030",
+		},
+		DatabaseConfig: DatabaseConfig{
+			DBPort:     "5432",
+			DBHost:     "localhost",
+			DBUser:     "postgres",
+			DBPassword: "password",
+			DBName:     "revenue_leak_detective_dev",
+		},
 		LogLevel: slog.LevelInfo, // Default log level
 		Env:      "development",  // Default environment
 	}
@@ -28,7 +52,7 @@ func LoadConfig() (*Config, error) {
 		if err := validatePort(port); err != nil {
 			return nil, fmt.Errorf("invalid port: %w", err)
 		}
-		config.Port = port
+		config.ServerConfig.Port = port
 	}
 
 	// Load log level
@@ -84,4 +108,14 @@ func (c *Config) IsDevelopment() bool {
 // IsProduction returns true if the environment is production
 func (c *Config) IsProduction() bool {
 	return c.Env == "production" || c.Env == "prod"
+}
+
+func (c *Config) DatabaseURL() string {
+	u := &url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(c.DatabaseConfig.DBUser, c.DatabaseConfig.DBPassword),
+		Host:   net.JoinHostPort(c.DatabaseConfig.DBHost, c.DatabaseConfig.DBPort),
+		Path:   "/" + c.DatabaseConfig.DBName,
+	}
+	return u.String()
 }
