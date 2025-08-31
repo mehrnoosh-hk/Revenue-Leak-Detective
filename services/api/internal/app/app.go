@@ -120,7 +120,7 @@ func (a *App) Start(ctx context.Context) error {
 		db.Close()
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
-
+	a.logger.Info("Database connection verified")
 	a.SetDatabase(db)
 
 	// Validate that all required dependencies are set
@@ -132,6 +132,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// Start the server
+	a.logger.Info("Server is ready to accept requests")
 	return a.server.Start(ctx, a.logger)
 }
 
