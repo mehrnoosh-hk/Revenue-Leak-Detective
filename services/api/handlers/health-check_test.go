@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"rdl-api/config"
 	"strings"
 	"testing"
 )
@@ -17,11 +16,6 @@ func TestHealthCheckHandler(t *testing.T) {
 		Level: slog.LevelInfo,
 	}))
 
-	hd := &HandlerDependencies{
-		Config: &config.Config{Port: "8080", LogLevel: slog.LevelInfo, Env: "test"},
-		Logger: testLogger,
-	}
-
 	// Test GET request
 	t.Run("GET request returns OK", func(t *testing.T) {
 		req, err := http.NewRequest("GET", "/healthz", nil)
@@ -30,7 +24,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := HealthCheckHandler(hd)
+		handler := HealthCheckHandler(testLogger)
 		handler.ServeHTTP(rr, req)
 
 		if status := rr.Code; status != http.StatusOK {
@@ -58,7 +52,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := HealthCheckHandler(hd)
+		handler := HealthCheckHandler(testLogger)
 		handler.ServeHTTP(rr, req)
 
 		if status := rr.Code; status != http.StatusMethodNotAllowed {
