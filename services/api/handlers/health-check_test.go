@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+	"time"
 )
 
 // Write a test for the HealthCheckHandler
@@ -39,8 +40,25 @@ func TestHealthCheckHandler(t *testing.T) {
 		}
 
 		// Check that response contains status field
-		if !strings.Contains(rr.Body.String(), `"status":"OK"`) {
-			t.Errorf("handler returned unexpected body: %v", rr.Body.String())
+		var gotBody struct {
+			Status string `json:"status"`
+			Timestamp time.Time `json:"timestamp"`
+			Version string `json:"version"`
+		}
+		if err := json.Unmarshal(rr.Body.Bytes(), &gotBody); err != nil {
+			t.Errorf("failed to unmarshal response body, invalid json: %v", err)
+		}
+		if gotBody.Status != "OK" {
+			t.Errorf("handler returned wrong status: got %v want %v",
+				gotBody.Status, "OK")
+		}
+
+		// check the timestamp and version is not empty
+		if gotBody.Timestamp.IsZero() {
+			t.Errorf("handler returned empty timestamp")
+		}
+		if gotBody.Version == "" {
+			t.Errorf("handler returned empty version")
 		}
 	})
 
