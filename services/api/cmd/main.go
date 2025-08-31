@@ -69,7 +69,7 @@ func main() {
 
 	logger.Info("Initializing Application")
 
-	app := app.New(cfg, logger)
+	application := app.New(cfg, logger)
 
 	// TODO: Handle health check flag (for Docker health checks)
 	if *healthFlag {
@@ -79,7 +79,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	if err := app.Start(ctx); err != nil {
+	if err := application.Start(ctx); err != nil {
 		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
