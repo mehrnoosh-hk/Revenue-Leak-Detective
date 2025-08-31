@@ -110,6 +110,17 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create database connection: %w", err)
 	}
+
+	// Verify database connectivity with a short timeout
+	a.logger.Info("Verifying database connection")
+	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := db.Ping(pingCtx); err != nil {
+		db.Close()
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+
 	a.SetDatabase(db)
 
 	// Validate that all required dependencies are set
