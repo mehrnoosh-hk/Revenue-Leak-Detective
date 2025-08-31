@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -109,5 +111,11 @@ func (c *Config) IsProduction() bool {
 }
 
 func (c *Config) DatabaseURL() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", c.DatabaseConfig.DBUser, c.DatabaseConfig.DBPassword, c.DatabaseConfig.DBHost, c.DatabaseConfig.DBPort, c.DatabaseConfig.DBName)
+	u := &url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(c.DatabaseConfig.DBUser, c.DatabaseConfig.DBPassword),
+		Host:   net.JoinHostPort(c.DatabaseConfig.DBHost, c.DatabaseConfig.DBPort),
+		Path:   "/" + c.DatabaseConfig.DBName,
+	}
+	return u.String()
 }
