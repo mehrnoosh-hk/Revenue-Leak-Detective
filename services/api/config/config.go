@@ -12,33 +12,29 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
-	CONFIG_VERSION = "1.0.0"
-)
-
 // HTTPConfig holds HTTP server configuration for the API service
 type HTTPConfig struct {
-	Host string `yaml:"api_host"`
-	Port string `yaml:"api_port"`
+	Host string `yaml:"API_HOST"`
+	Port string `yaml:"API_PORT"`
 }
 
 // DatabaseConfig holds database configuration
 type DatabaseConfig struct {
-	URL      string `yaml:"POSTGRESQL_URL"`
-	Host     string `yaml:"POSTGRESQL_HOST"`
-	Port     string `yaml:"POSTGRESQL_PORT"`
-	User     string `yaml:"POSTGRESQL_USER"`
-	Password string `yaml:"POSTGRESQL_PASSWORD"`
-	Name     string `yaml:"POSTGRESQL_NAME"`
+	URL      string `yaml:"POSTGRES_URL"`
+	Host     string `yaml:"POSTGRES_HOST"`
+	Port     string `yaml:"POSTGRES_PORT"`
+	User     string `yaml:"POSTGRES_USER"`
+	Password string `yaml:"POSTGRES_PASSWORD"`
+	DBName   string `yaml:"POSTGRES_DB"`
 	SSLMode  string `yaml:"POSTGRES_SSL"`
 }
 
 // EnvironmentConfig holds environment-specific configuration
 type EnvironmentConfig struct {
-	Environment string     `yaml:"ENVIRONMENT"`
-	Debug       bool       `yaml:"DEBUG"`
 	LogLevel    slog.Level `yaml:"LOG_LEVEL"`
+	Environment string     `yaml:"ENVIRONMENT"`
 	ConfigVer   string     `yaml:"CONFIG_VERSION"`
+	Debug       bool       `yaml:"DEBUG"`
 }
 
 // BuildInfoConfig holds build information configuration
@@ -56,39 +52,55 @@ type BuildInfoConfig struct {
 
 // Config holds the complete application configuration
 type Config struct {
-	HTTP        HTTPConfig
-	Database    DatabaseConfig
-	Environment EnvironmentConfig
 	BuildInfo   BuildInfoConfig
+	Database    DatabaseConfig
+	HTTP        HTTPConfig
+	Environment EnvironmentConfig
 }
 
-
-// LoadConfigWithEnvFile loads the configuration with a specific env file path
-func LoadConfigWithEnvFile(envFilePath string) (*Config, error) {
-	// Load environment file if specified
-	if err := loadEnvFile(envFilePath); err != nil {
-		return nil, fmt.Errorf("failed to load environment file: %w", err)
+// LoadConfig loads the configuration with a specific env file path
+func LoadConfig(envFilePath string) (*Config, error) {
+	// Load environment file if specified (only in non-production environments)
+	if envFilePath != "" {
+		if err := loadEnvFile(envFilePath); err != nil {
+			return nil, fmt.Errorf("failed to load environment file: %w", err)
+		}
 	}
+
+	// After loading env file, determine the environment
+	env := os.Getenv("ENVIRONMENT")
+	isProduction := isProductionEnvironment(env)
 
 	config := &Config{
 		HTTP: HTTPConfig{
-			Host: getEnvOrDefault("API_HOST", "0.0.0.0"),
-			Port: getEnvOrDefault("API_PORT", "3030"),
+			Host: getEnvValue("API_HOST", isProduction, "0.0.0.0"),
+			Port: getEnvValue("API_PORT", isProduction, "3030"),
 		},
 		Database: DatabaseConfig{
 			URL:      os.Getenv("POSTGRES_URL"),
-			Host:     getEnvOrDefaultStrict("POSTGRES_HOST", "localhost"),
-			Port:     getEnvOrDefaultStrict("POSTGRES_PORT", "5432"),
-			User:     getEnvOrDefaultStrict("POSTGRES_USER", "postgres"),
-			Password: getEnvOrDefaultStrict("POSTGRES_PASSWORD", "password"),
-			Name:     getEnvOrDefaultStrict("POSTGRES_NAME", "revenue_leak_detective_dev"),
-			SSLMode:  getEnvOrDefaultStrict("POSTGRES_SSL", "disable"),
+			Host:     getEnvValue("POSTGRES_HOST", isProduction, "localhost"),
+			Port:     getEnvValue("POSTGRES_PORT", isProduction, "5432"),
+			User:     getEnvValue("POSTGRES_USER", isProduction, "postgres"),
+			Password: getEnvValue("POSTGRES_PASSWORD", isProduction, "password"),
+			DBName:   getEnvValue("POSTGRES_DB", isProduction, "revenue_leak_detective_dev"),
+			SSLMode:  getEnvValue("POSTGRES_SSL", isProduction, "disable"),
 		},
 		Environment: EnvironmentConfig{
-			Environment: getEnvOrDefault("ENVIRONMENT", "development"),
-			Debug:       getEnvOrDefault("DEBUG", "false") == "true",
-			LogLevel:    parseLogLevel(getEnvOrDefault("LOG_LEVEL", "INFO")),
-			ConfigVer:   CONFIG_VERSION,
+			Environment: getEnvValue("ENVIRONMENT", isProduction, "development"),
+			Debug:       getEnvValue("DEBUG", isProduction, "false") == "true",
+			LogLevel:    parseLogLevel(getEnvValue("LOG_LEVEL", isProduction, "INFO")),
+			ConfigVer:   getEnvValue("CONFIG_VERSION", isProduction, "unknown"),
+		},
+		BuildInfo: BuildInfoConfig{
+			GIT_COMMIT_HASH:       getEnvValue("GIT_COMMIT_HASH", isProduction, "unknown"),
+			GIT_COMMIT_FULL:       getEnvValue("GIT_COMMIT_FULL", isProduction, "unknown"),
+			GIT_COMMIT_DATE:       getEnvValue("GIT_COMMIT_DATE", isProduction, "unknown"),
+			GIT_COMMIT_DATE_SHORT: getEnvValue("GIT_COMMIT_DATE_SHORT", isProduction, "unknown"),
+			GIT_COMMIT_MESSAGE:    getEnvValue("GIT_COMMIT_MESSAGE", isProduction, "unknown"),
+			GIT_BRANCH:            getEnvValue("GIT_BRANCH", isProduction, "unknown"),
+			GIT_TAG:               getEnvValue("GIT_TAG", isProduction, "unknown"),
+			GIT_DIRTY:             getEnvValue("GIT_DIRTY", isProduction, "unknown"),
+			BUILD_TIMESTAMP:       getEnvValue("BUILD_TIMESTAMP", isProduction, "unknown"),
 		},
 	}
 
@@ -97,19 +109,11 @@ func LoadConfigWithEnvFile(envFilePath string) (*Config, error) {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
-	// Print effective configuration (excluding secrets)
-	config.printEffectiveConfig()
-
 	return config, nil
 }
 
 // loadEnvFile loads environment file if path is provided
 func loadEnvFile(envFilePath string) error {
-	// Only load env file if path is explicitly provided
-	if envFilePath == "" {
-		return nil
-	}
-
 	// Check if file exists
 	if _, err := os.Stat(envFilePath); err != nil {
 		return fmt.Errorf("env file not found: %s", envFilePath)
@@ -123,18 +127,27 @@ func loadEnvFile(envFilePath string) error {
 	return nil
 }
 
-// getEnvOrDefault gets an environment variable or returns a default value
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+// isProductionEnvironment checks if the given environment is production
+func isProductionEnvironment(env string) bool {
+	env = strings.ToLower(env)
+	return env == "production" || env == "prod"
 }
 
-// getEnvOrDefaultStrict gets an environment variable or returns a default value
-// This version treats empty strings as "not set" and returns the default
-func getEnvOrDefaultStrict(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists && value != "" {
+// getEnvValue gets an environment variable with different behavior based on environment
+// In production: requires the environment variable to be set, returns error if not found
+// In non-production: falls back to default value if not set
+func getEnvValue(key string, isProduction bool, defaultValue string) string {
+	if isProduction {
+		// In production, require the environment variable to be set
+		if value, exists := os.LookupEnv(key); exists && value != "" {
+			return value
+		}
+		// If not found in production, return empty string (will be caught by validation)
+		return ""
+	}
+
+	// In non-production, use default behavior
+	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return defaultValue
@@ -142,6 +155,11 @@ func getEnvOrDefaultStrict(key, defaultValue string) string {
 
 // validate ensures all required configuration is present and valid
 func (c *Config) validate() error {
+	// Validate required environment variables in production first
+	if err := c.validateRequiredEnvVars(); err != nil {
+		return fmt.Errorf("required environment variables: %w", err)
+	}
+
 	// Validate HTTP configuration
 	if err := c.validateHTTP(); err != nil {
 		return fmt.Errorf("HTTP config: %w", err)
@@ -170,23 +188,23 @@ func (c *Config) validateHTTP() error {
 
 // validateDatabase validates database configuration
 func (c *Config) validateDatabase() error {
-	// If DATABASE_URL is provided, it takes precedence
+	// If POSTGRES_URL is provided, it takes precedence
 	if c.Database.URL != "" {
 		if _, err := url.Parse(c.Database.URL); err != nil {
-			return fmt.Errorf("invalid DATABASE_URL: %w", err)
+			return fmt.Errorf("invalid POSTGRES_URL: %w", err)
 		}
 		return nil
 	}
 
 	// Otherwise, validate individual database parameters
 	if c.Database.Host == "" {
-		return fmt.Errorf("DB_HOST is required when DATABASE_URL is not provided")
+		return fmt.Errorf("POSTGRES_HOST is required when POSTGRES_URL is not provided")
 	}
 	if c.Database.User == "" {
-		return fmt.Errorf("DB_USER is required when DATABASE_URL is not provided")
+		return fmt.Errorf("POSTGRES_USER is required when POSTGRES_URL is not provided")
 	}
-	if c.Database.Name == "" {
-		return fmt.Errorf("DB_NAME is required when DATABASE_URL is not provided")
+	if c.Database.DBName == "" {
+		return fmt.Errorf("POSTGRES_DB is required when POSTGRES_URL is not provided")
 	}
 
 	if err := validatePort(c.Database.Port); err != nil {
@@ -208,6 +226,34 @@ func (c *Config) validateEnvironment() error {
 	}
 
 	return fmt.Errorf("invalid environment: %s (valid: %v)", env, validEnvs)
+}
+
+// validateRequiredEnvVars validates that required environment variables are set in production
+func (c *Config) validateRequiredEnvVars() error {
+	// Only validate in production environment
+	if !c.IsProduction() {
+		return nil
+	}
+
+	// In production, all required environment variables must be set
+	requiredVars := []string{
+		"API_HOST", "API_PORT", "POSTGRES_HOST", "POSTGRES_PORT",
+		"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "POSTGRES_SSL",
+		"ENVIRONMENT", "DEBUG", "LOG_LEVEL", "CONFIG_VERSION",
+	}
+
+	var missing []string
+	for _, varName := range requiredVars {
+		if value, exists := os.LookupEnv(varName); !exists || value == "" {
+			missing = append(missing, varName)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required environment variables in production: %v", missing)
+	}
+
+	return nil
 }
 
 // validatePort ensures the port is valid
@@ -238,43 +284,33 @@ func parseLogLevel(level string) slog.Level {
 	}
 }
 
-// printEffectiveConfig prints the effective configuration (excluding secrets)
-func (c *Config) printEffectiveConfig() {
+// PrintEffectiveConfig prints the effective configuration (excluding secrets and build information)
+func (c *Config) PrintEffectiveConfig(logger *slog.Logger) {
 
 	// Use slog to print the configuration
-	logger := slog.Default()
-	logger.Info("Effective configuration loaded",
-		slog.String("config_version", CONFIG_VERSION),
-		slog.String("environment", c.Environment.Environment),
-		slog.Bool("debug", c.Environment.Debug),
-		slog.String("log_level", c.Environment.LogLevel.String()),
-		slog.String("http_port", c.HTTP.Port),
-		slog.String("db_host", c.Database.Host),
-		slog.String("db_port", c.Database.Port),
-		slog.String("db_name", c.Database.Name),
-		slog.String("db_user", c.Database.User),
-		slog.String("db_ssl_mode", c.Database.SSLMode),
-	)
+	logger.Info("Effective configuration loaded")
+	logger.Info(fmt.Sprintf("config_version: %s", c.Environment.ConfigVer))
+	logger.Info(fmt.Sprintf("environment: %s", c.Environment.Environment))
+	logger.Info(fmt.Sprintf("debug: %v", c.Environment.Debug))
+	logger.Info(fmt.Sprintf("log_level: %s", c.Environment.LogLevel.String()))
+	logger.Info(fmt.Sprintf("http_port: %s", c.HTTP.Port))
+	logger.Info(fmt.Sprintf("db_host: %s", c.Database.Host))
+	logger.Info(fmt.Sprintf("db_port: %s", c.Database.Port))
+	logger.Info(fmt.Sprintf("db_name: %s", c.Database.DBName))
+	logger.Info(fmt.Sprintf("db_user: %s", c.Database.User))
+	logger.Info(fmt.Sprintf("db_ssl_mode: %s", c.Database.SSLMode))
 }
 
-// maskSecret masks sensitive parts of a URL
-func maskSecret(urlStr string) string {
-	if urlStr == "" {
-		return ""
-	}
-
-	parsed, err := url.Parse(urlStr)
-	if err != nil {
-		return "***"
-	}
-
-	if parsed.User != nil {
-		if _, ok := parsed.User.Password(); ok {
-			parsed.User = url.UserPassword(parsed.User.Username(), "***")
-		}
-	}
-
-	return parsed.String()
+// PrintBuildInfo prints the build information
+func (c *Config) PrintBuildInfo(logger *slog.Logger) {
+	logger.Info("Build information")
+	logger.Info(fmt.Sprintf("version: %s", c.BuildInfo.GIT_TAG))
+	logger.Info(fmt.Sprintf("commit: %s", c.BuildInfo.GIT_COMMIT_FULL))
+	logger.Info(fmt.Sprintf("build_date: %s", c.BuildInfo.BUILD_TIMESTAMP))
+	logger.Info(fmt.Sprintf("git_branch: %s", c.BuildInfo.GIT_BRANCH))
+	logger.Info(fmt.Sprintf("git_tag: %s", c.BuildInfo.GIT_TAG))
+	logger.Info(fmt.Sprintf("git_dirty: %s", c.BuildInfo.GIT_DIRTY))
+	logger.Info(fmt.Sprintf("git_commit_message: %s", c.BuildInfo.GIT_COMMIT_MESSAGE))
 }
 
 // IsDevelopment returns true if the environment is development
@@ -303,7 +339,7 @@ func (c *Config) IsTest() bool {
 
 // DatabaseURL returns the database connection URL
 func (c *Config) DatabaseURL() string {
-	// If DATABASE_URL is provided, use it directly
+	// If POSTGRES_URL is provided, use it directly
 	if c.Database.URL != "" {
 		return c.Database.URL
 	}
@@ -313,7 +349,7 @@ func (c *Config) DatabaseURL() string {
 		Scheme: "postgresql",
 		User:   url.UserPassword(c.Database.User, c.Database.Password),
 		Host:   net.JoinHostPort(c.Database.Host, c.Database.Port),
-		Path:   "/" + c.Database.Name,
+		Path:   "/" + c.Database.DBName,
 	}
 
 	// Add SSL mode as query parameter if specified
