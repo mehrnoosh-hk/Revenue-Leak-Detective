@@ -38,11 +38,11 @@ install-workers-tools:
 ## check-tools: Verify required development tools are installed
 check-tools:
 	@printf "$(BLUE)Checking required tools...$(NC)\n"
-	@command -v go >/dev/null || (printf "$(RED)❌ Go not installed$(NC)\n" && exit 1)
-	@command -v docker >/dev/null || (printf "$(RED)❌ Docker not installed$(NC)\n" && exit 1)
-	@command -v sqlc >/dev/null || (printf "$(RED)❌ sqlc not installed$(NC)\n" && exit 1)
-	@command -v migrate >/dev/null || (printf "$(RED)❌ golang-migrate not installed$(NC)\n" && exit 1)
-	@command -v uv >/dev/null || printf "$(YELLOW)⚠️  UV not installed (required for workers development)$(NC)\n"
+	@command -v go >/dev/null && printf "$(GREEN)✓ Go available$(NC)\n" || (printf "$(RED)❌ Go not installed$(NC)\n" && exit 1)
+	@command -v docker >/dev/null && printf "$(GREEN)✓ Docker available$(NC)\n" || (printf "$(RED)❌ Docker not installed$(NC)\n" && exit 1)
+	@command -v sqlc >/dev/null && printf "$(GREEN)✓ sqlc available$(NC)\n" || (printf "$(RED)❌ sqlc not installed$(NC)\n" && exit 1)
+	@command -v migrate >/dev/null && printf "$(GREEN)✓ golang-migrate available$(NC)\n" || (printf "$(RED)❌ golang-migrate not installed$(NC)\n" && exit 1)
+	@command -v uv >/dev/null && printf "$(GREEN)✓ UV available$(NC)\n" || printf "$(YELLOW)⚠️  UV not installed (required for workers development)$(NC)\n"
 	@printf "$(GREEN)✓ Required tools available$(NC)\n"
 
 ## check-workers-tools: Verify workers-related development tools are installed
