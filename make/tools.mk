@@ -70,8 +70,8 @@ validate-env:
 	@test -d "$(WORKERS_SERVICE_PATH)" || (printf "$(RED)❌ Workers service path not found$(NC)\n" && exit 1)
 	@printf "$(GREEN)✓ Environment validated$(NC)\n"
 
-## dev: Run development server with hot reload
-dev: validate-env
-	@printf "$(GREEN)🚀 Starting development server with hot reload...$(NC)\n"
-	@command -v air >/dev/null 2>&1 || (echo "$(RED)❌ air not installed. Run: go install github.com/cosmtrek/air@latest$(NC)\n" && exit 1)
-	cd $(API_SERVICE_PATH) && air
+## git-env: Generate environment variables from git and append to .env
+git-env:
+	@printf "$(BLUE)Generating git environment variables...$(NC)\n"
+	@./scripts/get-git-info.sh
+	@printf "$(GREEN)✓ Git environment variables added to .env.dev$(NC)\n"
