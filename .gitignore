@@ -81,3 +81,6 @@ redis_data/
 *.db
 *.sqlite
 *.sqlite3
+
+# Example/learning files
+/examples/
