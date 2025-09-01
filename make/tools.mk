@@ -1,11 +1,8 @@
 # =============================================================================
-# Tools & Development Targets
+# Development Tools
 # =============================================================================
 
-# Tools PHONY declarations
-.PHONY: install-tools check-tools dev validate-env install-workers-tools check-workers-tools
-
-## install-tools: Install required development tools
+## install-tools: Install development tools
 install-tools:
 	@printf "$(MAGENTA)📦 Installing development tools...$(NC)\n"
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
