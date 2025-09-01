@@ -53,8 +53,14 @@ type Config struct {
 	BuildInfo   BuildInfoConfig
 }
 
-// LoadConfig loads the configuration from environment variables with validation
-func LoadConfig() (*Config, error) {
+
+// LoadConfigWithEnvFile loads the configuration with a specific env file path
+func LoadConfigWithEnvFile(envFilePath string) (*Config, error) {
+	// Load environment file if specified
+	if err := loadEnvFile(envFilePath); err != nil {
+		return nil, fmt.Errorf("failed to load environment file: %w", err)
+	}
+
 	config := &Config{
 		ServerConfig: ServerConfig{
 			Port: "3030",
