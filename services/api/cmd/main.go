@@ -23,9 +23,9 @@ func main() {
 	if *envFileFlag == "" {
 		slog.Warn("No env file provided, using only environment variables or fallbacks to defaults(development only)")
 	}
-	
+
 	// Load configuration
-	cfg, err := config.LoadConfigWithEnvFile(*envFileFlag)
+	cfg, err := config.LoadConfig(*envFileFlag)
 	if err != nil {
 		slog.Error("Failed to load configuration", "error", err)
 		os.Exit(1)
@@ -60,7 +60,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 
 func handleVersionFlag(cfg *config.Config) {
 	fmt.Printf("Revenue Leak Detective API\n")
