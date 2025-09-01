@@ -15,11 +15,13 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	DBPort     string `json:"db_port"`
-	DBHost     string `json:"db_host"`
-	DBUser     string `json:"db_user"`
-	DBPassword string `json:"db_password"`
-	DBName     string `json:"db_name"`
+	URL      string `yaml:"POSTGRESQL_URL"`
+	Host     string `yaml:"POSTGRESQL_HOST"`
+	Port     string `yaml:"POSTGRESQL_PORT"`
+	User     string `yaml:"POSTGRESQL_USER"`
+	Password string `yaml:"POSTGRESQL_PASSWORD"`
+	Name     string `yaml:"POSTGRESQL_NAME"`
+	SSLMode  string `yaml:"POSTGRES_SSL"`
 }
 
 // Config holds the application configuration
