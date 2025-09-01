@@ -62,7 +62,7 @@ check-workers-tools:
 	@printf "$(GREEN)✓ UV virtual environment properly configured$(NC)\n"
 	@printf "$(GREEN)✓ All workers development tools available$(NC)\n"
 
-## validate-env: Validate environment and required files
+## validate-env: Validate environment variables
 validate-env:
 	@printf "$(BLUE)Validating environment...$(NC)\n"
 	@test -f "$(ENV_FILE)" || (printf "$(RED)❌ $(ENV_FILE) not found$(NC)\n" && exit 1)
