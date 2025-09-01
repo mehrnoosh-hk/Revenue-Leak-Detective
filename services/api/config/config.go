@@ -24,7 +24,28 @@ type DatabaseConfig struct {
 	SSLMode  string `yaml:"POSTGRES_SSL"`
 }
 
-// Config holds the application configuration
+// EnvironmentConfig holds environment-specific configuration
+type EnvironmentConfig struct {
+	Environment string     `yaml:"ENVIRONMENT"`
+	Debug       bool       `yaml:"DEBUG"`
+	LogLevel    slog.Level `yaml:"LOG_LEVEL"`
+	ConfigVer   string     `yaml:"CONFIG_VERSION"`
+}
+
+// BuildInfoConfig holds build information configuration
+type BuildInfoConfig struct {
+	GIT_COMMIT_HASH       string `yaml:"GIT_COMMIT_HASH"`
+	GIT_COMMIT_FULL       string `yaml:"GIT_COMMIT_FULL"`
+	GIT_COMMIT_DATE       string `yaml:"GIT_COMMIT_DATE"`
+	GIT_COMMIT_DATE_SHORT string `yaml:"GIT_COMMIT_DATE_SHORT"`
+	GIT_COMMIT_MESSAGE    string `yaml:"GIT_COMMIT_MESSAGE"`
+	GIT_BRANCH            string `yaml:"GIT_BRANCH"`
+	GIT_TAG               string `yaml:"GIT_TAG"`
+	GIT_DIRTY             string `yaml:"GIT_DIRTY"`
+	BUILD_TIMESTAMP       string `yaml:"BUILD_TIMESTAMP"`
+}
+
+// Config holds the complete application configuration
 type Config struct {
 	ServerConfig   ServerConfig   `json:"server_config"`
 	DatabaseConfig DatabaseConfig `json:"database_config"`
