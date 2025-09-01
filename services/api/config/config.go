@@ -47,10 +47,10 @@ type BuildInfoConfig struct {
 
 // Config holds the complete application configuration
 type Config struct {
-	ServerConfig   ServerConfig   `json:"server_config"`
-	DatabaseConfig DatabaseConfig `json:"database_config"`
-	Env            string         `json:"environment"`
-	LogLevel       slog.Level     `json:"log_level"`
+	HTTP        HTTPConfig
+	Database    DatabaseConfig
+	Environment EnvironmentConfig
+	BuildInfo   BuildInfoConfig
 }
 
 // LoadConfig loads the configuration from environment variables with validation
