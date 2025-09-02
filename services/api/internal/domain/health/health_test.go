@@ -4,43 +4,45 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"rdl-api/internal/db/repository"
 )
 
-// MockDatabaseChecker implements DatabaseChecker for testing
-type MockDatabaseChecker struct {
+// MockHealthRepository implements repository.HealthRepository for testing
+type MockHealthRepository struct {
 	pingError error
 }
 
-func (m *MockDatabaseChecker) Ping(ctx context.Context) error {
+func (m *MockHealthRepository) Ping(ctx context.Context) error {
 	return m.pingError
 }
 
 func TestHealthService_CheckReadiness(t *testing.T) {
 	tests := []struct {
 		name        string
-		dbChecker   DatabaseChecker
+		healthRepo  repository.HealthRepository
 		expectError bool
 	}{
 		{
 			name:        "database available",
-			dbChecker:   &MockDatabaseChecker{pingError: nil},
+			healthRepo:  &MockHealthRepository{pingError: nil},
 			expectError: false,
 		},
 		{
 			name:        "database unavailable",
-			dbChecker:   &MockDatabaseChecker{pingError: ErrDatabaseUnavailable},
+			healthRepo:  &MockHealthRepository{pingError: repository.ErrDatabaseUnavailable},
 			expectError: true,
 		},
 		{
 			name:        "database not initialized",
-			dbChecker:   nil,
+			healthRepo:  nil,
 			expectError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewHealthService(tt.dbChecker)
+			service := NewHealthService(tt.healthRepo)
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
