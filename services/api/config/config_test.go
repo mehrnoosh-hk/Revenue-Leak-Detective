@@ -11,13 +11,19 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	// Store original env vars to restore later
-	originalPort := os.Getenv("API_PORT")
+	originalAPIHost := os.Getenv("API_HOST")
+	originalAPIPort := os.Getenv("API_PORT")
 	originalLogLevel := os.Getenv("LOG_LEVEL")
 	originalEnv := os.Getenv("ENVIRONMENT")
 	originalDBURL := os.Getenv("POSTGRES_URL")
 	originalDBHost := os.Getenv("POSTGRES_HOST")
 	originalDBUser := os.Getenv("POSTGRES_USER")
 	originalDBName := os.Getenv("POSTGRES_DB")
+	originalDBPort := os.Getenv("POSTGRES_PORT")
+	originalDBPassword := os.Getenv("POSTGRES_PASSWORD")
+	originalDBSSL := os.Getenv("POSTGRES_SSL")
+	originalDebug := os.Getenv("DEBUG")
+	originalConfigVer := os.Getenv("CONFIG_VERSION")
 
 	// Clean up after test
 	// Helper function to restore or unset environment variable
@@ -34,13 +40,19 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		restoreEnv("API_PORT", originalPort)
+		restoreEnv("API_HOST", originalAPIHost)
+		restoreEnv("API_PORT", originalAPIPort)
 		restoreEnv("LOG_LEVEL", originalLogLevel)
 		restoreEnv("ENVIRONMENT", originalEnv)
 		restoreEnv("POSTGRES_URL", originalDBURL)
 		restoreEnv("POSTGRES_HOST", originalDBHost)
 		restoreEnv("POSTGRES_USER", originalDBUser)
 		restoreEnv("POSTGRES_DB", originalDBName)
+		restoreEnv("POSTGRES_PORT", originalDBPort)
+		restoreEnv("POSTGRES_PASSWORD", originalDBPassword)
+		restoreEnv("POSTGRES_SSL", originalDBSSL)
+		restoreEnv("DEBUG", originalDebug)
+		restoreEnv("CONFIG_VERSION", originalConfigVer)
 	})
 
 	t.Run("default configuration", func(t *testing.T) {
