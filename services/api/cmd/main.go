@@ -13,61 +13,37 @@ import (
 	"github.com/lmittmann/tint"
 )
 
-// Build info - TODO: Use build flags to set these values
-var (
-	Version = "dev"
-	Commit  = "unknown"
-	Date    = "unknown"
-)
-
 func main() {
 	// Parse command line flags
 	versionFlag := flag.Bool("version", false, "Show version information")
 	healthFlag := flag.Bool("health", false, "Run health check and exit")
+	envFileFlag := flag.String("env-file", "", "Path to environment file (required)")
 	flag.Parse()
 
-	// Handle version flag
-	if *versionFlag {
-		fmt.Printf("Revenue Leak Detective API\n")
-		fmt.Printf("Version: %s\n", Version)
-		fmt.Printf("Commit: %s\n", Commit)
-		fmt.Printf("Built: %s\n", Date)
-		os.Exit(0)
+	if *envFileFlag == "" {
+		slog.Warn("No env file provided, using only environment variables or fallbacks to defaults(development only)")
 	}
 
 	// Load configuration
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(*envFileFlag)
 	if err != nil {
 		slog.Error("Failed to load configuration", "error", err)
 		os.Exit(1)
 	}
 
-	// Setup logger
-	handlerOptions := &slog.HandlerOptions{
-		AddSource: true,
-		Level:     cfg.LogLevel,
+	// Handle version flag
+	if *versionFlag {
+		handleVersionFlag(cfg)
 	}
 
-	var logger *slog.Logger
-	if cfg.IsDevelopment() {
-		logger = slog.New(tint.NewHandler(os.Stdout, &tint.Options{
-			Level:      cfg.LogLevel,
-			TimeFormat: time.RFC3339,
-			AddSource:  true,
-			NoColor:    false,
-		}))
-	} else {
-		logger = slog.New(slog.NewJSONHandler(os.Stdout, handlerOptions))
-	}
+	// Setup logger
+	logger := setupLogger(cfg)
 
 	// Log startup information
-	logger.Info("Starting Revenue Leak Detective API",
-		slog.String("version", Version),
-		slog.String("commit", Commit),
-		slog.String("build_date", Date),
-		slog.String("environment", cfg.Env))
+	logger.Info("Starting Revenue Leak Detective API")
 
-	logger.Info("Initializing Application")
+	cfg.PrintBuildInfo(logger)
+	cfg.PrintEffectiveConfig(logger)
 
 	application := app.New(cfg, logger)
 
@@ -83,4 +59,30 @@ func main() {
 		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
+}
+
+func handleVersionFlag(cfg *config.Config) {
+	fmt.Printf("Revenue Leak Detective API\n")
+	fmt.Printf("Version: %s", cfg.BuildInfo.GIT_TAG)
+	fmt.Printf("Commit: %s", cfg.BuildInfo.GIT_COMMIT_FULL)
+	fmt.Printf("Built: %s", cfg.BuildInfo.BUILD_TIMESTAMP)
+	os.Exit(0)
+}
+
+func setupLogger(cfg *config.Config) *slog.Logger {
+	var logger *slog.Logger
+	if cfg.IsDevelopment() {
+		logger = slog.New(tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      cfg.GetLogLevel(),
+			TimeFormat: time.RFC3339,
+			AddSource:  true,
+			NoColor:    false,
+		}))
+	} else {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     cfg.GetLogLevel(),
+			AddSource: true,
+		}))
+	}
+	return logger
 }

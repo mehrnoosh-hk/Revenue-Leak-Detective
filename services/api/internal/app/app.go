@@ -29,9 +29,12 @@ type App struct {
 }
 
 // Application errors
+// Use custom error types
 var (
 	ErrDatabaseNotInitialized = errors.New("database not initialized")
 	ErrServerNotInitialized   = errors.New("server not initialized")
+	ErrDatabaseConnection     = errors.New("database connection failed")
+	ErrServerStartup          = errors.New("server startup failed")
 )
 
 // New creates a new App instance with basic dependencies properly initialized.
@@ -45,7 +48,7 @@ func New(cfg *config.Config, logger *slog.Logger) *App {
 		server: &Server{
 			mux: mux,
 			server: &http.Server{
-				Addr:         ":" + cfg.ServerConfig.Port,
+				Addr:         ":" + cfg.GetPort(),
 				Handler:      mux,
 				ReadTimeout:  15 * time.Second,
 				WriteTimeout: 15 * time.Second,
@@ -101,9 +104,9 @@ func (a *App) Server() *Server {
 // Start initializes and starts the application.
 // It sets up all dependencies and starts the HTTP server.
 func (a *App) Start(ctx context.Context) error {
-	a.logger.Info("Starting application",
-		slog.String("environment", a.config.Env),
-		slog.String("port", a.config.ServerConfig.Port))
+	a.logger.Info("Starting application")
+	a.logger.Info(fmt.Sprintf("Environment: %s", a.config.GetEnvironment()))
+	a.logger.Info(fmt.Sprintf("Port: %s", a.config.GetPort()))
 
 	// create a *pgxpool.Pool instance from a.config.PostgresURL
 	db, err := pgxpool.New(ctx, a.config.DatabaseURL())
@@ -136,16 +139,56 @@ func (a *App) Start(ctx context.Context) error {
 	return a.server.Start(ctx, a.logger)
 }
 
+// HealthCheck performs a comprehensive health check of the application.
+// It verifies database connectivity and other critical dependencies.
+func (a *App) HealthCheck(ctx context.Context) error {
+	// Check if database is initialized
+	if a.db == nil {
+		return fmt.Errorf("database not initialized")
+	}
+
+	// Test database connectivity with a short timeout
+	healthCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	if err := a.db.Ping(healthCtx); err != nil {
+		return fmt.Errorf("database health check failed: %w", err)
+	}
+
+	// Could add more health checks here (Redis, external APIs, etc.)
+	return nil
+}
+
 // Shutdown gracefully shuts down the application.
 // It closes database connections and stops the server.
 func (a *App) Shutdown(ctx context.Context) error {
 	a.logger.Info("Shutting down application")
+
+	var shutdownErrors []error
 
 	// Close database connection
 	if a.db != nil {
 		a.db.Close()
 		a.logger.Info("Database connection closed")
 	}
+
+	// Shutdown server with timeout
+	if a.server != nil {
+		serverCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+
+		if err := a.server.server.Shutdown(serverCtx); err != nil {
+			shutdownErrors = append(shutdownErrors, fmt.Errorf("server shutdown failed: %w", err))
+		} else {
+			a.logger.Info("Server shutdown completed")
+		}
+	}
+
+	if len(shutdownErrors) > 0 {
+		return fmt.Errorf("shutdown errors: %v", shutdownErrors)
+	}
+
+	a.logger.Info("Graceful shutdown completed successfully")
 
 	return nil
 }
