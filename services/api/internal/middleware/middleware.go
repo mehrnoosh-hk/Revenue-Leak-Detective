@@ -40,6 +40,7 @@ func Logger(logger *slog.Logger) Middleware {
 				slog.String("user_agent", r.UserAgent()),
 				slog.Int("status_code", rw.statusCode),
 				slog.Duration("duration", duration),
+				slog.String("request_id", GetRequestID(r)),
 			)
 		})
 	}

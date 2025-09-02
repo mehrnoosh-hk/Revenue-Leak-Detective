@@ -72,8 +72,7 @@ func (a *App) SetServer(server *Server) {
 }
 
 func (a *App) StartServer(ctx context.Context) error {
-
-	return a.server.Start(ctx, a.logger)
+	return a.server.Start(ctx, a.logger, a.db)
 }
 
 // Config returns the application configuration.
@@ -136,7 +135,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	// Start the server
 	a.logger.Info("Server is ready to accept requests")
-	return a.server.Start(ctx, a.logger)
+	return a.server.Start(ctx, a.logger, a.db)
 }
 
 // HealthCheck performs a comprehensive health check of the application.
