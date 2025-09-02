@@ -3,6 +3,8 @@ package health
 import (
 	"context"
 	"time"
+
+	"rdl-api/internal/db/repository"
 )
 
 // HealthService defines the interface for health check operations
@@ -13,24 +15,19 @@ type HealthService interface {
 
 // healthService implements HealthService
 type healthService struct {
-	dbChecker DatabaseChecker
-}
-
-// DatabaseChecker abstracts database operations for health checks
-type DatabaseChecker interface {
-	Ping(ctx context.Context) error
+	healthRepo repository.HealthRepository
 }
 
 // NewHealthService creates a new health service instance
-func NewHealthService(dbChecker DatabaseChecker) HealthService {
+func NewHealthService(healthRepo repository.HealthRepository) HealthService {
 	return &healthService{
-		dbChecker: dbChecker,
+		healthRepo: healthRepo,
 	}
 }
 
 // CheckReadiness verifies if the application is ready to serve requests
 func (h *healthService) CheckReadiness(ctx context.Context) error {
-	if h.dbChecker == nil {
+	if h.healthRepo == nil {
 		return ErrDatabaseNotInitialized
 	}
 
@@ -38,7 +35,11 @@ func (h *healthService) CheckReadiness(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	return h.dbChecker.Ping(ctx)
+	if err := h.healthRepo.Ping(ctx); err != nil {
+		return ErrDatabaseUnavailable
+	}
+
+	return nil
 }
 
 // CheckLiveness verifies if the application is alive (no external dependencies)
