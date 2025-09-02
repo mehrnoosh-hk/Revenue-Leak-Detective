@@ -55,7 +55,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	if err := application.Start(ctx); err != nil {
+	if err := application.StartUp(ctx); err != nil {
 		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
