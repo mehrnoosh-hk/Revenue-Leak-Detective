@@ -18,9 +18,10 @@ type Server struct {
 	server *http.Server
 }
 
-func (s *Server) Start(ctx context.Context, logger *slog.Logger) error {
-	// Setup routes
-	s.SetupRoutes(logger)
+func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *DomainServices) error {
+
+	// Setup routes with services reference
+	s.SetupRoutes(logger, services)
 
 	// Channel to listen for interrupt signals
 	quit := make(chan os.Signal, 1)
@@ -55,10 +56,11 @@ func (s *Server) Start(ctx context.Context, logger *slog.Logger) error {
 	return nil
 }
 
-func (s *Server) SetupRoutes(logger *slog.Logger) {
+func (s *Server) SetupRoutes(logger *slog.Logger, services *DomainServices) {
 	// Apply middleware
 	handler := middleware.Chain(
 		s.mux,
+		middleware.RequestID(),
 		middleware.Logger(logger),
 		middleware.Recovery(logger),
 		middleware.CORS(),
@@ -69,4 +71,6 @@ func (s *Server) SetupRoutes(logger *slog.Logger) {
 	// Register routes
 	s.mux.HandleFunc("/healthz", handlers.HealthCheckHandler(logger))
 	s.mux.HandleFunc("/health", handlers.HealthCheckHandler(logger)) // Alternative endpoint
+	s.mux.HandleFunc("/live", handlers.LiveHandler(services.healthService, logger))
+	s.mux.HandleFunc("/ready", handlers.ReadyHandler(services.healthService, logger))
 }
