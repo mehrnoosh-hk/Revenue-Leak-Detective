@@ -31,6 +31,8 @@ GIT_COMMIT_FULL=$(git rev-parse HEAD)
 GIT_COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)
 GIT_COMMIT_DATE_SHORT=$(git log -1 --format=%cd --date=format:"%Y-%m-%d")
 GIT_COMMIT_MESSAGE=$(git log -1 --format=%s)
+# Escape for .env: backslashes and double quotes
+ESCAPED_GIT_COMMIT_MESSAGE="$(printf '%s' "$GIT_COMMIT_MESSAGE" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_TAG=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
 GIT_DIRTY=$(git status --porcelain | wc -l | tr -d ' ')
