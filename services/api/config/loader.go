@@ -11,16 +11,16 @@ import (
 
 // LoadConfig loads the configuration with a specific env file path
 func LoadConfig(envFilePath string) (*Config, error) {
-	// Load environment file if specified (only in non-production environments)
-	if envFilePath != "" {
+	// First determine the environment to check if we're in production
+	env := os.Getenv(EnvEnvironment)
+	isProduction := isProductionEnvironment(env)
+
+	// Load environment file if specified AND not in production
+	if envFilePath != "" && !isProduction {
 		if err := loadEnvFile(envFilePath); err != nil {
 			return nil, fmt.Errorf("%s: %w", ErrEnvFileLoadFailed, err)
 		}
 	}
-
-	// After loading env file, determine the environment
-	env := os.Getenv(EnvEnvironment)
-	isProduction := isProductionEnvironment(env)
 
 	config := &Config{
 		HTTP: HTTPConfig{
