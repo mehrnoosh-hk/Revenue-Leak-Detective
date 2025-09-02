@@ -75,16 +75,6 @@ jobs:
           sqlc-version: '1.30.0'
       - run: sqlc diff
 
-      - name: Install sqlc
-        run: |
-          curl -sSL https://github.com/sqlc-dev/sqlc/releases/latest/download/sqlc_$(uname -s)_amd64.tar.gz | sudo tar -xzf - -C /usr/local/bin sqlc
-
-      - name: Generate SQL code
-        run: make sqlc
-
-      - name: Check for generated code changes
-        run: git diff --exit-code
-
   # Sqlc-Verify check if the SQLC-generated code is up-to-date
   sqlc-verify:
     runs-on: ubuntu-latest
