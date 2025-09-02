@@ -65,7 +65,7 @@ if [ -f "$ENV_FILE" ]; then
         echo "GIT_COMMIT_FULL=$GIT_COMMIT_FULL"
         echo "GIT_COMMIT_DATE=$GIT_COMMIT_DATE"
         echo "GIT_COMMIT_DATE_SHORT=$GIT_COMMIT_DATE_SHORT"
-        echo "GIT_COMMIT_MESSAGE=\"$GIT_COMMIT_MESSAGE\""
+        printf 'GIT_COMMIT_MESSAGE="%s"\n' "$ESCAPED_GIT_COMMIT_MESSAGE"
         echo "GIT_BRANCH=$GIT_BRANCH"
         echo "GIT_TAG=$GIT_TAG"
         echo "GIT_DIRTY=$GIT_DIRTY"
