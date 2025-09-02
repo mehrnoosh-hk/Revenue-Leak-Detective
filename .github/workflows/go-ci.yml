@@ -60,23 +60,7 @@ jobs:
 
 
 
-  push:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./services/api
-    if: ${{ github.ref == 'refs/heads/main' }}
-    steps:
-    - uses: actions/checkout@v3
-    - uses: sqlc-dev/setup-sqlc@v3
-      with:
-        sqlc-version: '1.30.0'
-    - run: sqlc push
-      env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
-        
-  # Sqlc-Verify check if the SQLC-generated code is up-to-date
-  sqlc-verify:
+  verify:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -94,6 +78,20 @@ jobs:
       env:
         POSTGRESQL_SERVER_URI: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
         SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+  push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./services/api
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+    - uses: sqlc-dev/setup-sqlc@v3
+      with:
+        sqlc-version: '1.30.0'
+    - run: sqlc push
+      env:
+        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+
   
   # Validate database migrations against disposable Postgres
   migrate-validate:
