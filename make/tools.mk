@@ -73,5 +73,8 @@ validate-env:
 ## git-env: Generate environment variables from git and append to .env
 git-env:
 	@printf "$(BLUE)Generating git environment variables...$(NC)\n"
-	@./scripts/get-git-info.sh $(ENV_FILE)
-	@printf "$(GREEN)✓ Git environment variables added to .env.dev$(NC)\n"
+	@test -n "$(ENV_FILE)" || (printf "$(RED)❌ ENV_FILE not set (e.g., .env.dev)$(NC)\n" && exit 1)
+	@test -x "./scripts/get-git-info.sh" || (printf "$(RED)❌ scripts/get-git-info.sh not found or not executable$(NC)\n" && exit 1)
+	@command -v git >/dev/null || (printf "$(RED)❌ git not installed$(NC)\n" && exit 1)
+	@./scripts/get-git-info.sh "$(ENV_FILE)"
+	@printf "$(GREEN)✓ Git environment variables added to %s$(NC)\n" "$(ENV_FILE)"
