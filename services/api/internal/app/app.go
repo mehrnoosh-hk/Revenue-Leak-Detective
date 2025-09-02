@@ -7,7 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"rdl-api/config"
+	"rdl-api/internal/db/repository"
 	sqlc "rdl-api/internal/db/sqlc"
+	"rdl-api/internal/domain/health"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,8 +26,22 @@ type App struct {
 	db      *pgxpool.Pool
 	queries *sqlc.Queries
 
+	// Repository layer
+	repoLayer *RepoLayer
+
+	// Domain services
+	domainServices *DomainServices
+
 	// Server layer
 	server *Server
+}
+
+type RepoLayer struct {
+	healthRepo repository.HealthRepository
+}
+
+type DomainServices struct {
+	healthService health.HealthService
 }
 
 // Application errors
@@ -40,11 +56,12 @@ var (
 // New creates a new App instance with basic dependencies properly initialized.
 // This is the main entry point for dependency injection.
 func New(cfg *config.Config, logger *slog.Logger) *App {
-
 	mux := http.NewServeMux()
 	return &App{
-		config: cfg,
-		logger: logger,
+		config:         cfg,
+		logger:         logger,
+		repoLayer:      &RepoLayer{},      // Initialize the struct
+		domainServices: &DomainServices{}, // Initialize the struct
 		server: &Server{
 			mux: mux,
 			server: &http.Server{
@@ -71,9 +88,24 @@ func (a *App) SetServer(server *Server) {
 	a.server = server
 }
 
-func (a *App) StartServer(ctx context.Context) error {
+// setupDependencies creates all application dependencies
+func (a *App) setupDependencies() error {
+	if a.db == nil {
+		return ErrDatabaseNotInitialized
+	}
 
-	return a.server.Start(ctx, a.logger)
+	// Create repository layer
+	pgxAdapter := repository.NewPgxAdapter(a.db)
+	a.repoLayer.healthRepo = repository.NewHealthRepository(pgxAdapter)
+
+	// Create domain services
+	a.domainServices.healthService = health.NewHealthService(a.repoLayer.healthRepo)
+
+	return nil
+}
+
+func (a *App) StartServer(ctx context.Context) error {
+	return a.server.Start(ctx, a.logger, a.domainServices)
 }
 
 // Config returns the application configuration.
@@ -96,14 +128,24 @@ func (a *App) Queries() *sqlc.Queries {
 	return a.queries
 }
 
+// RepoLayer returns the repository layer.
+func (a *App) RepoLayer() *RepoLayer {
+	return a.repoLayer
+}
+
+// DomainServices returns the domain services.
+func (a *App) DomainServices() *DomainServices {
+	return a.domainServices
+}
+
 // Server returns the HTTP server.
 func (a *App) Server() *Server {
 	return a.server
 }
 
-// Start initializes and starts the application.
+// StartUp initializes and starts the application.
 // It sets up all dependencies and starts the HTTP server.
-func (a *App) Start(ctx context.Context) error {
+func (a *App) StartUp(ctx context.Context) error {
 	a.logger.Info("Starting application")
 	a.logger.Info(fmt.Sprintf("Environment: %s", a.config.GetEnvironment()))
 	a.logger.Info(fmt.Sprintf("Port: %s", a.config.GetPort()))
@@ -115,7 +157,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// Verify database connectivity with a short timeout
-	a.logger.Info("Verifying database connection")
+	a.logger.Info("Verifying database connection at app Startup")
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -124,19 +166,23 @@ func (a *App) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 	a.logger.Info("Database connection verified")
+
+	// Set the database connection
 	a.SetDatabase(db)
 
-	// Validate that all required dependencies are set
-	if a.db == nil {
-		return ErrDatabaseNotInitialized
+	// Setup all dependencies
+	if err := a.setupDependencies(); err != nil {
+		return fmt.Errorf("failed to setup dependencies: %w", err)
 	}
+
+	// Validate that all required dependencies are set
 	if a.server == nil {
 		return ErrServerNotInitialized
 	}
 
 	// Start the server
 	a.logger.Info("Server is ready to accept requests")
-	return a.server.Start(ctx, a.logger)
+	return a.server.Start(ctx, a.logger, a.domainServices)
 }
 
 // HealthCheck performs a comprehensive health check of the application.
