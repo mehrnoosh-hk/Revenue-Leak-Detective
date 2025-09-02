@@ -85,12 +85,16 @@ func LoadConfig(envFilePath string) (*Config, error) {
 			DBName:   getEnvValue("POSTGRES_DB", isProduction, "revenue_leak_detective_dev"),
 			SSLMode:  getEnvValue("POSTGRES_SSL", isProduction, "disable"),
 		},
-		Environment: EnvironmentConfig{
-			Environment: getEnvValue("ENVIRONMENT", isProduction, "development"),
-			Debug:       getEnvValue("DEBUG", isProduction, "false") == "true",
-			LogLevel:    parseLogLevel(getEnvValue("LOG_LEVEL", isProduction, "INFO")),
-			ConfigVer:   getEnvValue("CONFIG_VERSION", isProduction, "unknown"),
-		},
+		Environment: func() EnvironmentConfig {
+			debugStr := getEnvValue("DEBUG", isProduction, "false")
+			debugVal, _ := strconv.ParseBool(strings.ToLower(debugStr))
+			return EnvironmentConfig{
+				Environment: getEnvValue("ENVIRONMENT", isProduction, "development"),
+				Debug:       debugVal,
+				LogLevel:    parseLogLevel(getEnvValue("LOG_LEVEL", isProduction, "INFO")),
+				ConfigVer:   getEnvValue("CONFIG_VERSION", isProduction, "unknown"),
+			}
+		}(),
 		BuildInfo: BuildInfoConfig{
 			GIT_COMMIT_HASH:       getEnvValue("GIT_COMMIT_HASH", isProduction, "unknown"),
 			GIT_COMMIT_FULL:       getEnvValue("GIT_COMMIT_FULL", isProduction, "unknown"),
