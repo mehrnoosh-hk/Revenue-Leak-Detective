@@ -34,7 +34,13 @@ func LiveHandler(healthService health.HealthService, logger *slog.Logger) http.H
 
 		resp := probeResponse{Status: "OK", Timestamp: time.Now().UTC()}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			if logger != nil {
+				logger.Error("failed to encode response", slog.Any("error", err))
+			}
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -57,6 +63,12 @@ func ReadyHandler(healthService health.HealthService, logger *slog.Logger) http.
 
 		resp := probeResponse{Status: "OK", Timestamp: time.Now().UTC()}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			if logger != nil {
+				logger.Error("failed to encode response", slog.Any("error", err))
+			}
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
