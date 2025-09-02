@@ -179,7 +179,7 @@ const (
 	EnvPostgresHost     = "POSTGRES_HOST"
 	EnvPostgresPort     = "POSTGRES_PORT"
 	EnvPostgresUser     = "POSTGRES_USER"
-	EnvPostgresPassword = "POSTGRES_PASSWORD"
+	EnvPostgresPassword = "POSTGRES_PASSWORD" //nolint:gosec // This is an environment variable name, not a hardcoded password
 	EnvPostgresDB       = "POSTGRES_DB"
 	EnvPostgresSSL      = "POSTGRES_SSL"
 	EnvEnvironment      = "ENVIRONMENT"
