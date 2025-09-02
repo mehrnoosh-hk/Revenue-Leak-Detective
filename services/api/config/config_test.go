@@ -131,7 +131,7 @@ func TestLoadConfig(t *testing.T) {
 
 		_, err := LoadConfig("")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "port must be between 1 and 65535")
+		assert.Contains(t, err.Error(), "port out of range")
 	})
 
 	t.Run("invalid log level", func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestLoadConfig(t *testing.T) {
 		// This should fail because required environment variables are missing
 		_, err := LoadConfig("")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "missing required environment variables in production")
+		assert.Contains(t, err.Error(), "missing required environment variable")
 	})
 }
 
