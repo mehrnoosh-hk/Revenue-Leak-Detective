@@ -71,10 +71,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install sqlc
-        run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -90,20 +86,47 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-api-
 
+      - name: Cache sqlc binary
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/sqlc
+          key: ${{ runner.os }}-sqlc-v1.28.0
+          restore-keys: |
+            ${{ runner.os }}-sqlc-
+
+      - name: Install sqlc (if not cached)
+        run: |
+          if [ ! -f ~/go/bin/sqlc ]; then
+            echo "Installing sqlc v1.28.0..."
+            go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.28.0
+          else
+            echo "Using cached sqlc binary"
+            chmod +x ~/go/bin/sqlc
+          fi
+
       - name: Download dependencies
         run: go mod download
 
       - name: Generate sqlc code
-        run: sqlc generate
+        run: ~/go/bin/sqlc generate
 
       - name: Check for sqlc code differences
+        id: sqlc-check
         run: |
+          echo "🔍 Checking sqlc code synchronization..."
+
           if ! git diff --quiet -- ./internal/db/sqlc/; then
+            echo "::error title=SQLC Code Out of Sync::Generated sqlc code is out of sync with committed code"
             echo "❌ Generated sqlc code is out of sync with committed code."
-            echo "Please run 'sqlc generate' locally and commit the changes."
+            echo "📝 Please run 'make sqlc-generate' locally and commit the changes."
             echo ""
-            echo "Differences found:"
+            echo "📋 Files with differences:"
+            git diff --name-only -- ./internal/db/sqlc/
+            echo ""
+            echo "🔍 Full diff:"
+            echo "::group::SQLC Diff"
             git diff -- ./internal/db/sqlc/
+            echo "::endgroup::"
             exit 1
           else
             echo "✅ sqlc generated code is up to date"
