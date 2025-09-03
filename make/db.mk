@@ -4,7 +4,7 @@
 
 # Database PHONY declarations
 .PHONY: migrate-up migrate-down migrate-create migrate-version migrate-force
-.PHONY: migrate-up-step migrate-down-step db-reset sqlc
+.PHONY: migrate-up-step migrate-down-step db-reset sqlc sqlc-check
 .PHONY: _validate-env _validate-postgres-url _validate-dev-env
 
 # =============================================================================
@@ -43,7 +43,7 @@ migrate-down: _validate-postgres-url
 	@printf "$(YELLOW)⬇️  Rolling back last database migration...$(NC)\n"
 	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
-		migrate -path ./migrations -database "$$POSTGRES_URL" down 1 && \
+		migrate -path ./migrations -database "$$POSTGRES_URL" down -all && \
 		printf "$(GREEN)✓ Last migration rolled back$(NC)\n"
 
 ## migrate-up-step: Apply specific number of migration steps (usage: make migrate-up-step STEPS=1)
@@ -93,14 +93,30 @@ migrate-create:
 		printf "$(GREEN)✓ Migration files created in ./migrations/$(NC)\n"
 
 # =============================================================================
-# Code Generation
+# SQLC Generation and Management
 # =============================================================================
 
-## sqlc: Generate SQLC code from SQL queries
-sqlc:
+## sqlc-generate: Generate SQLC code from SQL queries
+sqlc-generate:
 	@printf "$(BLUE)📝 Generating SQLC code...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && sqlc generate
 	@printf "$(GREEN)✓ SQLC code generated$(NC)\n"
+
+## sqlc-check: Check if generated SQLC code matches committed code (matches CI workflow)
+sqlc-check:
+	@printf "$(BLUE)🔍 Checking SQLC code synchronization...$(NC)\n"
+	@cd $(API_SERVICE_PATH) && \
+		if ! git diff --quiet -- ./internal/db/sqlc/; then \
+			printf "$(RED)❌ Generated sqlc code is out of sync with committed code.$(NC)\n"; \
+			printf "$(YELLOW)Please run 'make sqlc-generate' and commit the changes.$(NC)\n\n"; \
+			printf "$(BLUE)Differences found in:$(NC)\n"; \
+			git diff --name-only -- ./internal/db/sqlc/; \
+			printf "\n$(BLUE)Full diff:$(NC)\n"; \
+			git diff -- ./internal/db/sqlc/; \
+			exit 1; \
+		else \
+			printf "$(GREEN)✅ sqlc generated code is up to date$(NC)\n"; \
+		fi
 
 # =============================================================================
 # Database Management
