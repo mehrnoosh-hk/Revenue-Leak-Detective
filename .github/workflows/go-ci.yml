@@ -90,15 +90,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/sqlc
-          key: ${{ runner.os }}-sqlc-v1.28.0
+          key: ${{ runner.os }}-sqlc-v1.30.0
           restore-keys: |
             ${{ runner.os }}-sqlc-
 
       - name: Install sqlc (if not cached)
         run: |
           if [ ! -f ~/go/bin/sqlc ]; then
-            echo "Installing sqlc v1.28.0..."
-            go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.28.0
+            echo "Installing sqlc v1.30.0..."
+            go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
           else
             echo "Using cached sqlc binary"
             chmod +x ~/go/bin/sqlc
