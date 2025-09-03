@@ -60,37 +60,54 @@ jobs:
 
 
 
-  verify:
+  # Check sqlc generated code is up to date
+  sqlc-check:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api-changed == 'true'
     defaults:
       run:
         working-directory: ./services/api
     steps:
-    - uses: actions/checkout@v3
-    - uses: sqlc-dev/setup-sqlc@v3
-      with:
-        sqlc-version: '1.30.0'
-    - uses: sqlc-dev/action-setup-postgres@master
-      with:
-        postgres-version: "16"
-      id: postgres
-    - run: sqlc verify
-      env:
-        POSTGRESQL_SERVER_URI: ${{ steps.postgres.outputs.connection-uri }}?sslmode=disable
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
-  push:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./services/api
-    if: ${{ github.ref == 'refs/heads/main' }}
-    steps:
-    - uses: sqlc-dev/setup-sqlc@v3
-      with:
-        sqlc-version: '1.30.0'
-    - run: sqlc push
-      env:
-        SQLC_AUTH_TOKEN: ${{ secrets.SQLC_AUTH_TOKEN }}
+      - uses: actions/checkout@v4
+
+      - name: Install sqlc
+        run: |
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.2"
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-api-${{ hashFiles('services/api/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-api-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Generate sqlc code
+        run: sqlc generate
+
+      - name: Check for sqlc code differences
+        run: |
+          if ! git diff --quiet -- ./internal/db/sqlc/; then
+            echo "❌ Generated sqlc code is out of sync with committed code."
+            echo "Please run 'sqlc generate' locally and commit the changes."
+            echo ""
+            echo "Differences found:"
+            git diff -- ./internal/db/sqlc/
+            exit 1
+          else
+            echo "✅ sqlc generated code is up to date"
+          fi
 
   
   # Validate database migrations against disposable Postgres
@@ -175,21 +192,24 @@ jobs:
   # Summary job that always runs to provide consistent status checks
   ci-status:
     runs-on: ubuntu-latest
-    needs: [detect-changes, lint-api, migrate-validate, test-api]
+    needs: [detect-changes, lint-api, sqlc-check, migrate-validate, test-api]
     if: always()  # Always run regardless of other job outcomes
     steps:
       - name: Determine CI Status
         run: |
           echo "API changed: ${{ needs.detect-changes.outputs.api-changed }}"
+          echo "SQLC check result: ${{ needs.sqlc-check.result }}"
           echo "Test API result: ${{ needs.test-api.result }}"
-          
+
           if [[ "${{ needs.detect-changes.outputs.api-changed }}" == "true" ]]; then
-            # API changed, so we expect test-api to have run
-            if [[ "${{ needs.test-api.result }}" == "success" ]]; then
-              echo "✅ API service tests passed"
+            # API changed, so we expect all checks to have run
+            if [[ "${{ needs.sqlc-check.result }}" == "success" && "${{ needs.test-api.result }}" == "success" ]]; then
+              echo "✅ All API service checks passed"
               exit 0
             else
-              echo "❌ API service tests failed"
+              echo "❌ Some API service checks failed:"
+              echo "  - SQLC check: ${{ needs.sqlc-check.result }}"
+              echo "  - Test API: ${{ needs.test-api.result }}"
               exit 1
             fi
           else
