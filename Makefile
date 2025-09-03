@@ -34,7 +34,7 @@ help:
 	@printf "\n$(BOLD)🏗️  Build & Test:$(NC)\n"
 	@grep -E '^## (api-build|api-test|workers-test).*:' make/*.mk | sed 's/^[^:]*://; s/^##/  /' | column -t -s ':'
 	@printf "\n$(BOLD)📊 Database:$(NC)\n"
-	@grep -E '^## (migrate|sqlc|db-reset).*:' make/*.mk | sed 's/^[^:]*://; s/^##/  /' | column -t -s ':'
+	@grep -E '^## (migrate|sqlc|db-reset).*:' make/db.mk | sed 's/^[^:]*://; s/^##/  /' | column -t -s ':'
 	@printf "\n$(BOLD)🐳 Docker:$(NC)\n"
 	@grep -E '^## (docker-).*:' make/*.mk | sed 's/^[^:]*://; s/^##/  /' | column -t -s ':'
 	@printf "\n$(BOLD)⚡ Quality:$(NC)\n"
@@ -43,7 +43,7 @@ help:
 	@grep -E '^## (install-tools|check-tools|validate-env).*:' make/*.mk | sed 's/^[^:]*://; s/^##/  /' | column -t -s ':'
 
 ## all: Run complete CI pipeline (format, lint, test, build)
-all: validate-env api-fmt api-vet api-lint api-test api-build workers-all
+all: validate-env sqlc-check api-fmt api-vet api-lint api-test api-build workers-all
 
 ## clean: Clean all build artifacts and caches
 clean: api-clean
