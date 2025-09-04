@@ -193,7 +193,7 @@ func getJSONTag(tag *ast.BasicLit) string {
 func getConvertFrom(sqlcType, fieldName string) string {
 	switch sqlcType {
 	case "pgtype.UUID":
-		return fmt.Sprintf("s.%s.Bytes", fieldName)
+		return fmt.Sprintf("uuid.UUID(s.%s.Bytes)", fieldName)
 	case "pgtype.Timestamptz":
 		return fmt.Sprintf("s.%s.Time", fieldName)
 	default:
@@ -205,7 +205,7 @@ func getConvertFrom(sqlcType, fieldName string) string {
 func getConvertTo(sqlcType, fieldName string) string {
 	switch sqlcType {
 	case "pgtype.UUID":
-		return fmt.Sprintf("pgtype.UUID{Bytes: d.%s, Valid: true}", fieldName)
+		return fmt.Sprintf("pgtype.UUID{Bytes: [16]byte(d.%s), Valid: true}", fieldName)
 	case "pgtype.Timestamptz":
 		return fmt.Sprintf("pgtype.Timestamptz{Time: d.%s, Valid: true}", fieldName)
 	default:
