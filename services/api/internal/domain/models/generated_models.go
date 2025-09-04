@@ -32,7 +32,7 @@ func ToUserDomain(s sqlc.User) *User {
 // ToUserSqlc converts domain.User to sqlc.User
 func ToUserSqlc(d *User) sqlc.User {
 	return sqlc.User{
-		ID:        pgtype.UUID{Bytes: d.ID, Valid: true},
+		ID:        pgtype.UUID{Bytes: [16]byte(d.ID), Valid: true},
 		Email:     d.Email,
 		Name:      d.Name,
 		CreatedAt: pgtype.Timestamptz{Time: d.CreatedAt, Valid: true},
