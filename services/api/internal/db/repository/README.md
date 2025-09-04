@@ -72,44 +72,81 @@ err := repo.Ping(ctx)
 
 ### User Repository
 
-The user repository provides complete CRUD operations for user management using sqlc-generated type-safe database operations:
+The user repository provides complete CRUD operations for user management using domain-specific types and sqlc-generated type-safe database operations:
 
 ```go
 // Interface definition
 type UserRepository interface {
-    CreateUser(ctx context.Context, email, name string) (*User, error)
-    GetUserByID(ctx context.Context, id string) (*User, error)
-    GetUserByEmail(ctx context.Context, email string) (*User, error)
-    GetAllUsers(ctx context.Context) ([]*User, error)
-    UpdateUser(ctx context.Context, id, email, name string) (*User, error)
-    DeleteUser(ctx context.Context, id string) error
+    CreateUser(ctx context.Context, arg models.CreateUserParams) (models.User, error)
+    DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
+    GetAllUsers(ctx context.Context) ([]models.User, error)
+    GetUserByEmail(ctx context.Context, email string) (models.User, error)
+    GetUserById(ctx context.Context, id uuid.UUID) (models.User, error)
+    UpdateUser(ctx context.Context, arg models.UpdateUserParams) (models.User, error)
 }
 
-// Implementation using sqlc
-type userRepository struct {
-    queries *sqlc.Queries
+// Domain parameter structs (auto-generated)
+type CreateUserParams struct {
+    Email string `json:"email"`
+    Name  string `json:"name"`
+}
+
+type UpdateUserParams struct {
+    ID        uuid.UUID  `json:"id"`         // Primary key
+    Email     *string    `json:"email"`      // Optional for updates
+    Name      *string    `json:"name"`       // Optional for updates
+    UpdatedAt *time.Time `json:"updated_at"` // Optional for updates
 }
 ```
 
-#### Usage:
-
 #### Features:
+- **Domain Decoupling**: Uses domain-specific parameter structs instead of SQLC types
 - **Type Safety**: Uses sqlc-generated types for compile-time safety
 - **Error Handling**: Proper error wrapping and custom repository errors
 - **Input Validation**: Validates input parameters before database operations
-- **UUID Support**: Handles PostgreSQL UUID types properly
+- **UUID Support**: Handles PostgreSQL UUID types properly with domain types
 - **Null Handling**: Properly handles nullable database fields
+- **Auto-generation**: Parameter structs are automatically generated from SQLC models
 
 #### Testing:
 ```go
 // Comprehensive test coverage with mocks
 mockQueries := &MockQueries{}
-mockQueries.On("CreateUser", mock.Anything, mock.AnythingOfType("sqlc.CreateUserParams")).Return(mockUser, nil)
+mockQueries.On("CreateUser", mock.Anything, mock.AnythingOfType("models.CreateUserParams")).Return(mockUser, nil)
 
 repo := repository.NewUserRepository(mockQueries)
-user, err := repo.CreateUser(ctx, "test@example.com", "Test User")
+user, err := repo.CreateUser(ctx, models.CreateUserParams{
+    Email: "test@example.com",
+    Name:  "Test User",
+})
 // Assert expectations
 ```
+
+## Domain Model Generation
+
+The repository layer automatically generates domain models and parameter structs from SQLC models:
+
+### Auto-generated Components:
+- **Domain Models**: Clean domain entities with proper Go types (e.g., `uuid.UUID` instead of `pgtype.UUID`)
+- **Parameter Structs**: Type-safe parameters for CRUD operations
+- **Conversion Functions**: Bidirectional conversion between domain and SQLC types
+
+### Generation Command:
+```bash
+make domain-models-generate
+```
+
+This command:
+1. Parses SQLC-generated models
+2. Generates domain models with proper types
+3. Creates parameter structs for repository operations
+4. Provides conversion functions between layers
+
+### Benefits:
+- **Decoupling**: Repository interface independent of SQLC implementation
+- **Type Safety**: Domain types provide better compile-time safety
+- **Maintainability**: Changes to SQLC don't break repository contracts
+- **Consistency**: Uniform parameter patterns across all repositories
 
 ## Benefits of Repository Pattern
 
