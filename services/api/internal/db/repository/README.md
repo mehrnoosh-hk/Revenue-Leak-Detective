@@ -14,7 +14,7 @@ Domain Services → Repository Interfaces → Repository Implementations → Dat
 
 ### Components
 
-#### 1. Repository Interfaces (`health_repository.go`)
+#### 1. Repository Interfaces (`repo_interface.go`)
 - Define contracts for data access operations
 - Domain-specific repository interfaces
 - Independent of database implementation
@@ -70,6 +70,60 @@ err := repo.Ping(ctx)
 // Assert expectations
 ```
 
+### User Repository
+
+The user repository provides complete CRUD operations for user management using sqlc-generated type-safe database operations:
+
+```go
+// Interface definition
+type UserRepository interface {
+    CreateUser(ctx context.Context, email, name string) (*User, error)
+    GetUserByID(ctx context.Context, id string) (*User, error)
+    GetUserByEmail(ctx context.Context, email string) (*User, error)
+    GetAllUsers(ctx context.Context) ([]*User, error)
+    UpdateUser(ctx context.Context, id, email, name string) (*User, error)
+    DeleteUser(ctx context.Context, id string) error
+}
+
+// Implementation using sqlc
+type userRepository struct {
+    queries *sqlc.Queries
+}
+```
+
+#### Usage:
+```go
+// Create repository with sqlc queries
+userRepo := repository.NewUserRepository(queries)
+
+// Create a new user
+user, err := userRepo.CreateUser(ctx, "user@example.com", "John Doe")
+
+// Get user by ID
+user, err := userRepo.GetUserByID(ctx, "123e4567-e89b-12d3-a456-426614174000")
+
+// Update user
+updatedUser, err := userRepo.UpdateUser(ctx, userID, "new@example.com", "Jane Doe")
+```
+
+#### Features:
+- **Type Safety**: Uses sqlc-generated types for compile-time safety
+- **Error Handling**: Proper error wrapping and custom repository errors
+- **Input Validation**: Validates input parameters before database operations
+- **UUID Support**: Handles PostgreSQL UUID types properly
+- **Null Handling**: Properly handles nullable database fields
+
+#### Testing:
+```go
+// Comprehensive test coverage with mocks
+mockQueries := &MockQueries{}
+mockQueries.On("CreateUser", mock.Anything, mock.AnythingOfType("sqlc.CreateUserParams")).Return(mockUser, nil)
+
+repo := repository.NewUserRepository(mockQueries)
+user, err := repo.CreateUser(ctx, "test@example.com", "Test User")
+// Assert expectations
+```
+
 ## Benefits of Repository Pattern
 
 ### 1. **Separation of Concerns**
@@ -92,15 +146,17 @@ err := repo.Ping(ctx)
 
 When adding new repositories, follow this pattern:
 
-1. **Define the interface** in `{domain}_repository.go`
-2. **Implement the repository** with business logic
-3. **Create database adapters** if needed
-4. **Define repository errors** in `errors.go`
-5. **Write comprehensive tests**
+1. **Define the interface** in `repo_interface.go`
+2. **Create a file for the repository implementation** in `{domain}_repository.go`
+3. **Implement the repository** with business logic
+4. **Create database adapters** if needed
+5. **Define repository errors** in `errors.go`
+6. **Write comprehensive tests**
 
 Example structure:
 ```
 repository/
+├── repo_interface.go        # Repository interface
 ├── health_repository.go      # Health repository interface
 ├── user_repository.go        # User repository interface
 ├── pgx_adapter.go           # Database adapters
@@ -134,13 +190,6 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*User, err
     return r.queries.GetUserById(ctx, id)
 }
 ```
-
-**Current Implementation:**
-The health repository demonstrates a simple, clean implementation:
-- Uses a `Database` interface for abstraction
-- Implements the repository pattern with minimal complexity
-- Provides easy testing through interface mocking
-- Follows Go best practices for dependency injection
 
 ## Best Practices
 
