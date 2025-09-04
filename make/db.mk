@@ -4,7 +4,7 @@
 
 # Database PHONY declarations
 .PHONY: migrate-up migrate-down migrate-create migrate-version migrate-force
-.PHONY: migrate-up-step migrate-down-step db-reset sqlc sqlc-check
+.PHONY: migrate-up-step migrate-down-step db-reset sqlc sqlc-check domain-models-generate
 .PHONY: _validate-env _validate-postgres-url _validate-dev-env
 
 # =============================================================================
@@ -117,6 +117,12 @@ sqlc-check:
 		else \
 			printf "$(GREEN)✅ sqlc generated code is up to date$(NC)\n"; \
 		fi
+
+## domain-models-generate: Generate domain models from SQLC models
+domain-models-generate:
+	@printf "$(BLUE)📝 Generating domain models...$(NC)\n"
+	@cd $(API_SERVICE_PATH) && go run scripts/generate_domain_models.go
+	@printf "$(GREEN)✓ Domain models generated$(NC)\n"
 
 # =============================================================================
 # Database Management
