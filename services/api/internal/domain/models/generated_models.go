@@ -21,7 +21,7 @@ type User struct {
 // ToUser converts sqlc.User to domain.User
 func ToUserDomain(s sqlc.User) *User {
 	return &User{
-		ID:        s.ID.Bytes,
+		ID:        uuid.UUID(s.ID.Bytes),
 		Email:     s.Email,
 		Name:      s.Name,
 		CreatedAt: s.CreatedAt.Time,
