@@ -23,8 +23,9 @@
   </context>
 
   <references>
-    - <Road_Map.md>
-    - <Product_Idea.md>
+-    - <Road_Map.md>
+    - <Road_Map.txt>
+    - <Product_Idea.txt>
     - Project repository (current state)
   </references>
 
