@@ -92,19 +92,6 @@ type userRepository struct {
 ```
 
 #### Usage:
-```go
-// Create repository with sqlc queries
-userRepo := repository.NewUserRepository(queries)
-
-// Create a new user
-user, err := userRepo.CreateUser(ctx, "user@example.com", "John Doe")
-
-// Get user by ID
-user, err := userRepo.GetUserByID(ctx, "123e4567-e89b-12d3-a456-426614174000")
-
-// Update user
-updatedUser, err := userRepo.UpdateUser(ctx, userID, "new@example.com", "Jane Doe")
-```
 
 #### Features:
 - **Type Safety**: Uses sqlc-generated types for compile-time safety
