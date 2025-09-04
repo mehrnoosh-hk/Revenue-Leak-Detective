@@ -1,0 +1,40 @@
+<v1 – Core MVP (0 → 1)>
+Goal: Prove value by recovering direct revenue.
+Leak Focus: Failed charges only.
+Integrations: Stripe, Slack, Linear
+Agent Behavior:
+Detect failed charges, suggest fix (retry, outreach), draft customer email + Linear task, human-in-the-loop approval (approve/deny/refine)
+Output: Alerts + actionable drafts (not just insights).
+</v1 – Core MVP (0 → 1)>
+
+<v2 – Expand Leaks + Trust (1 → 10)>
+Goal: Broaden use cases + deepen workflow adoption.
+Leak Focus: Coupon misuse, “Forever trials”, Quiet churn (downgrade + no logins)
+Integrations: Additional billing: Chargebee, Recurly
+Workflow: Jira, Trello
+Notifications: Email + MS Teams
+Agent Behavior:
+Smarter triage → prioritization by $$ impact
+Refinement loop → user can ask agent to “improve outreach draft”
+Output: Richer fixes, multi-leak coverage, cross-platform tasks.
+</v2 – Expand Leaks + Trust (1 → 10)>
+
+<v3 – Revenue Ops Copilot (10 → 100)>
+Goal: Become a full AI copilot for revenue operations.
+Leak Focus: Unbilled usage, Predictive churn signals (AI/ML on login + usage patterns), Pricing/discount optimization suggestions
+Integrations: CRMs (Salesforce, HubSpot), Customer success tools (Gainsight, Zendesk), Finance systems (Netsuite, QuickBooks)
+Agent Behavior: Semi-autonomous mode: can auto-resolve low-risk leaks (retry charges)
+Proactive insights: “example: $5K in churn risk this quarter”
+Playbooks: recommended campaigns + workflows
+Output: Trusted partner in revenue ops → from detection → recommendation → (optionally) automated action.
+</v3 – Revenue Ops Copilot (10 → 100)>
+
+<Technical shape that supports speed and credibility>
+Event-driven ingestion: Stripe webhooks → events table (idempotent) → “leak engine”.
+Leak engine v1: simple rules + queries; each leak = detector + triager + playbook.
+Actions service: produces Slack cards + Linear tasks + (later) email drafts.
+Approvals: signed decision records, replayable; per-tenant rate limits.
+Schema (Postgres with sqlc + migrate): tenants, integrations, customers, payments, leaks, actions, approvals, playbooks, metrics_daily.
+Observability: structured logs, request IDs, a “decision log” screen.
+Idempotency & safety: idempotency keys for actions, dry-run default, safe fallbacks on API errors.
+</Technical shape that supports speed and credibility>

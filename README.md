@@ -138,6 +138,8 @@ This command installs development tools such as golangci-lint, ...
 │       │   │   │   ├── health.go  # Health service interface & impl
 │       │   │   │   ├── errors.go  # Domain-specific errors
 │       │   │   │   └── health_test.go
+│       │   │   ├── models/        # Auto-generated domain models
+│       │   │   │   └── generated_models.go # Domain models & params
 │       │   │   └── README.md      # Domain layer documentation
 │       │   ├── db/                # Database layer
 │       │   │   ├── queries/       # SQL queries for sqlc

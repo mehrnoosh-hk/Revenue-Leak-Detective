@@ -1,0 +1,52 @@
+<Idea>
+An AI-powered agent that hunts down revenue leaks in SaaS (failed charges, paused subscriptions, coupon misuse, “trial forever” zombies, quiet churn signals). It doesn’t just surface leaks — it triages issues, suggests fixes, drafts customer outreach, and files tasks automatically.
+</Idea>
+
+<Target Users (ICP)>
+SaaS companies (Series A–C, revenue ops teams, finance leads, SaaS founders).
+</Target Users (ICP)>
+
+<Pain>
+Pain: lost revenue from unnoticed leaks + manual revenue recovery efforts.
+</Pain>
+
+<Problem & Pain Point>
+Failed payments (most common, high ROI).
+Unbilled usage.
+Quiet churn (no logins + downgrades).
+Coupon & discount misuse.
+“Trial forever” zombie accounts.
+</Problem & Pain Point>
+
+<Value Proposition>
+Differentiator: Not just dashboards → an agent that acts.
+Flow: Detect → Suggest → Draft outreach/task → Human approves.
+Integration-first: Stripe (v1), Slack + Linear (v1), later Chargebee/Recurly/Jira.
+</Value Proposition>
+
+<MVP Scope>
+Start narrow → failed charges only (Stripe integration).
+Agent alerts in Slack, suggests fix, drafts Linear task.
+Human-in-the-loop: approve, deny, refine.
+</MVP Scope>
+
+<Stage & Goals>
+Current: Prototype/MVP in development.
+Next Milestones:
+1.	MVP: Failed charges (Stripe integration) + Slack(Notifications) + Linear(Tasks).
+2.	Expand: Add churn (no logins + downgrades) + coupon misuse + trial zombies.
+3.	Growth: Multi-leak + multiple billing integrations.
+</Stage & Goals>
+
+<How It Works>
+Detect → failed charge identified.
+Suggest → retry payment or outreach.
+Draft → email + Linear task created.
+Human Approves → push to customer / task system.
+</How It Works>
+
+<Constraints>
+Solo founder (lean build).
+B2B SaaS-first.
+Monetization path: tiered SaaS subscription.
+</Constraints>
