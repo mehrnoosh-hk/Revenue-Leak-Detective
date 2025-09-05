@@ -44,7 +44,7 @@ migrate-down: _validate-postgres-url
 	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" down -all && \
-		printf "$(GREEN)✓ Last migration rolled back$(NC)\n"
+		printf "$(GREEN)✓ All migrations rolled back$(NC)\n"
 
 ## migrate-up-step: Apply specific number of migration steps (usage: make migrate-up-step STEPS=1)
 migrate-up-step: _validate-postgres-url
@@ -84,12 +84,13 @@ migrate-force: _validate-postgres-url
 # Migration File Management
 # =============================================================================
 
-## migrate-create: Create a new migration file (usage: make migrate-create NAME=migration_name)
+## migrate-create: Create a new migration file with timestamp (usage: make migrate-create name=migration_name)
+## Note: Uses timestamp format by default (YYYYMMDDHHMMSS). For custom format, modify the command below.
 migrate-create:
-	@test -n "$(NAME)" || (printf "$(RED)❌ NAME is required. Usage: make migrate-create NAME=migration_name$(NC)\n" && exit 1)
-	@printf "$(BLUE)📝 Creating migration: $(NAME)...$(NC)\n"
+	@test -n "$(name)" || (printf "$(RED)❌ name is required. Usage: make migrate-create name=migration_name$(NC)\n" && exit 1)
+	@printf "$(BLUE)📝 Creating migration: $(name)...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && \
-		migrate create -ext sql -dir ./migrations -seq $(NAME) && \
+		migrate create -ext sql -dir ./migrations $(name) && \
 		printf "$(GREEN)✓ Migration files created in ./migrations/$(NC)\n"
 
 # =============================================================================
