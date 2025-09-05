@@ -3,8 +3,8 @@
 # =============================================================================
 
 # Shell configuration
-SHELL := /bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
+SHELL := /bin/sh
+.SHELLFLAGS := -c
 
 # Colors for output
 RED := \e[31m
