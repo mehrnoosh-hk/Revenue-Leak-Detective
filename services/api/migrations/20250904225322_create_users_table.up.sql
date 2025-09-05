@@ -1,13 +1,13 @@
--- Initial schema for Revenue Leak Detective
--- Migration: 001_initial_schema.up.sql
-
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Enable CITEXT extension for case-insensitive text
+CREATE EXTENSION IF NOT EXISTS "citext";
 
 -- Create users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
+    email CITEXT UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

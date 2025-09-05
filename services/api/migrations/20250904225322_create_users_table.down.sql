@@ -1,6 +1,3 @@
--- Rollback initial schema for Revenue Leak Detective
--- Migration: 001_initial_schema.down.sql
-
 -- Drop trigger first
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 
@@ -15,3 +12,6 @@ DROP TABLE IF EXISTS users;
 
 -- Drop UUID extension
 DROP EXTENSION IF EXISTS "uuid-ossp";
+
+-- Drop CITEXT extension
+DROP EXTENSION IF EXISTS "citext";
