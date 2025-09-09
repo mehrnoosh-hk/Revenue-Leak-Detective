@@ -90,7 +90,7 @@ migrate-create:
 	@test -n "$(name)" || (printf "$(RED)❌ name is required. Usage: make migrate-create name=migration_name$(NC)\n" && exit 1)
 	@printf "$(BLUE)📝 Creating migration: $(name)...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && \
-		migrate create -ext sql -dir ./migrations $(name) && \
+		migrate create -ext sql -seq -digits 3 -dir ./migrations $(name) && \
 		printf "$(GREEN)✓ Migration files created in ./migrations/$(NC)\n"
 
 # =============================================================================
