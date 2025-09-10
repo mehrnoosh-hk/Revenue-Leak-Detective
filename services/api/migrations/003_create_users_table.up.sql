@@ -4,7 +4,7 @@ CREATE TABLE users (
     tenant_id UUID NOT NULL,
     email CITEXT NOT NULL,
     name VARCHAR(255) NOT NULL,
-    external_id VARCHAR(255) NOT NULL,
+    external_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
