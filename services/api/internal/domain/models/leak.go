@@ -5,6 +5,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,4 +40,19 @@ type UpdateLeakParams struct {
 	LeakType   *LeakTypeEnum `json:"leak_type"`
 	Amount     *float32      `json:"amount"`
 	Confidence *int32        `json:"confidence"`
+}
+
+var (
+	ErrInvalidAmount = errors.New("amount must be greater than 0")
+	ErrInvalidConfidence = errors.New("confidence must be between 0 and 100")
+)
+
+func (l *Leak) Validate() error {
+	if l.Amount <= 0 {
+		return ErrInvalidAmount
+	}
+	if l.Confidence < 0 || l.Confidence > 100 {
+		return ErrInvalidConfidence
+	}
+	return nil
 }
