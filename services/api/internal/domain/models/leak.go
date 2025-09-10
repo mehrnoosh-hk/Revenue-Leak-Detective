@@ -43,7 +43,7 @@ type UpdateLeakParams struct {
 }
 
 var (
-	ErrInvalidAmount = errors.New("amount must be greater than 0")
+	ErrInvalidAmount     = errors.New("amount must be greater than 0")
 	ErrInvalidConfidence = errors.New("confidence must be between 0 and 100")
 )
 

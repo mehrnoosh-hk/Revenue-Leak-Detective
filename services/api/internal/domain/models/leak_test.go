@@ -6,9 +6,9 @@ import (
 
 func TestLeak_Validate(t *testing.T) {
 	tests := []struct {
-		name      string
-		leak      Leak
-		wantErr   error
+		name    string
+		leak    Leak
+		wantErr error
 	}{
 		{
 			name: "valid leak",
