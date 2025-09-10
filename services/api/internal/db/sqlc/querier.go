@@ -11,13 +11,25 @@ import (
 )
 
 type Querier interface {
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateAction(ctx context.Context, arg CreateActionParams) (Action, error)
+	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteAction(ctx context.Context, id pgtype.UUID) (int64, error)
+	DeleteEvent(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
-	GetAllUsers(ctx context.Context) ([]User, error)
+	// actions table queries
+	GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error)
+	GetAllActions(ctx context.Context) ([]Action, error)
+	GetAllEvents(ctx context.Context) ([]Event, error)
+	GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error)
+	// events table queries
+	GetEventByID(ctx context.Context, id pgtype.UUID) (Event, error)
 	// users table queries
-	GetUserByEmail(ctx context.Context, email string) (User, error)
-	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
+	GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error)
+	UpdateAction(ctx context.Context, arg UpdateActionParams) (Action, error)
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

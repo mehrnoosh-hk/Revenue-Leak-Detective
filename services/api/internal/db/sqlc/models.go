@@ -5,8 +5,435 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type ActionResultEnum string
+
+const (
+	ActionResultEnumSuccess ActionResultEnum = "success"
+	ActionResultEnumFailure ActionResultEnum = "failure"
+	ActionResultEnumPending ActionResultEnum = "pending"
+	ActionResultEnumOther   ActionResultEnum = "other"
+)
+
+func (e *ActionResultEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ActionResultEnum(s)
+	case string:
+		*e = ActionResultEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ActionResultEnum: %T", src)
+	}
+	return nil
+}
+
+type NullActionResultEnum struct {
+	ActionResultEnum ActionResultEnum `json:"action_result_enum"`
+	Valid            bool             `json:"valid"` // Valid is true if ActionResultEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullActionResultEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ActionResultEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ActionResultEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullActionResultEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ActionResultEnum), nil
+}
+
+type ActionStatusEnum string
+
+const (
+	ActionStatusEnumPending  ActionStatusEnum = "pending"
+	ActionStatusEnumApproved ActionStatusEnum = "approved"
+	ActionStatusEnumModified ActionStatusEnum = "modified"
+	ActionStatusEnumDenied   ActionStatusEnum = "denied"
+)
+
+func (e *ActionStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ActionStatusEnum(s)
+	case string:
+		*e = ActionStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ActionStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullActionStatusEnum struct {
+	ActionStatusEnum ActionStatusEnum `json:"action_status_enum"`
+	Valid            bool             `json:"valid"` // Valid is true if ActionStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullActionStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ActionStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ActionStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullActionStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ActionStatusEnum), nil
+}
+
+type ActionTypeEnum string
+
+const (
+	ActionTypeEnumRetryPayment ActionTypeEnum = "retry_payment"
+	ActionTypeEnumOutreach     ActionTypeEnum = "outreach"
+	ActionTypeEnumLinearTask   ActionTypeEnum = "linear_task"
+	ActionTypeEnumEmail        ActionTypeEnum = "email"
+	ActionTypeEnumOther        ActionTypeEnum = "other"
+)
+
+func (e *ActionTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ActionTypeEnum(s)
+	case string:
+		*e = ActionTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ActionTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullActionTypeEnum struct {
+	ActionTypeEnum ActionTypeEnum `json:"action_type_enum"`
+	Valid          bool           `json:"valid"` // Valid is true if ActionTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullActionTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ActionTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ActionTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullActionTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ActionTypeEnum), nil
+}
+
+type EventStatusEnum string
+
+const (
+	EventStatusEnumPending   EventStatusEnum = "pending"
+	EventStatusEnumProcessed EventStatusEnum = "processed"
+	EventStatusEnumFailed    EventStatusEnum = "failed"
+)
+
+func (e *EventStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EventStatusEnum(s)
+	case string:
+		*e = EventStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EventStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullEventStatusEnum struct {
+	EventStatusEnum EventStatusEnum `json:"event_status_enum"`
+	Valid           bool            `json:"valid"` // Valid is true if EventStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEventStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.EventStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EventStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEventStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EventStatusEnum), nil
+}
+
+type EventTypeEnum string
+
+const (
+	EventTypeEnumPaymentFailed    EventTypeEnum = "payment_failed"
+	EventTypeEnumPaymentSucceeded EventTypeEnum = "payment_succeeded"
+	EventTypeEnumPaymentRefunded  EventTypeEnum = "payment_refunded"
+	EventTypeEnumPaymentUpdated   EventTypeEnum = "payment_updated"
+)
+
+func (e *EventTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EventTypeEnum(s)
+	case string:
+		*e = EventTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EventTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullEventTypeEnum struct {
+	EventTypeEnum EventTypeEnum `json:"event_type_enum"`
+	Valid         bool          `json:"valid"` // Valid is true if EventTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEventTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.EventTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EventTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEventTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EventTypeEnum), nil
+}
+
+type LeakTypeEnum string
+
+const (
+	LeakTypeEnumFailedPayments       LeakTypeEnum = "failed_payments"
+	LeakTypeEnumUnbilledUsage        LeakTypeEnum = "unbilled_usage"
+	LeakTypeEnumQuietChurn           LeakTypeEnum = "quiet_churn"
+	LeakTypeEnumCouponDiscountMisuse LeakTypeEnum = "coupon_discount_misuse"
+	LeakTypeEnumTrialForever         LeakTypeEnum = "trial_forever"
+	LeakTypeEnumOther                LeakTypeEnum = "other"
+)
+
+func (e *LeakTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = LeakTypeEnum(s)
+	case string:
+		*e = LeakTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for LeakTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullLeakTypeEnum struct {
+	LeakTypeEnum LeakTypeEnum `json:"leak_type_enum"`
+	Valid        bool         `json:"valid"` // Valid is true if LeakTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullLeakTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.LeakTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.LeakTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullLeakTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.LeakTypeEnum), nil
+}
+
+type PaymentStatusEnum string
+
+const (
+	PaymentStatusEnumPending   PaymentStatusEnum = "pending"
+	PaymentStatusEnumSucceeded PaymentStatusEnum = "succeeded"
+	PaymentStatusEnumFailed    PaymentStatusEnum = "failed"
+	PaymentStatusEnumOther     PaymentStatusEnum = "other"
+)
+
+func (e *PaymentStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentStatusEnum(s)
+	case string:
+		*e = PaymentStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentStatusEnum struct {
+	PaymentStatusEnum PaymentStatusEnum `json:"payment_status_enum"`
+	Valid             bool              `json:"valid"` // Valid is true if PaymentStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentStatusEnum), nil
+}
+
+type PaymentTypeEnum string
+
+const (
+	PaymentTypeEnumWebhook PaymentTypeEnum = "webhook"
+	PaymentTypeEnumHistory PaymentTypeEnum = "history"
+)
+
+func (e *PaymentTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentTypeEnum(s)
+	case string:
+		*e = PaymentTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentTypeEnum struct {
+	PaymentTypeEnum PaymentTypeEnum `json:"payment_type_enum"`
+	Valid           bool            `json:"valid"` // Valid is true if PaymentTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentTypeEnum), nil
+}
+
+type Action struct {
+	ID         pgtype.UUID        `json:"id"`
+	LeakID     pgtype.UUID        `json:"leak_id"`
+	ActionType ActionTypeEnum     `json:"action_type"`
+	Status     ActionStatusEnum   `json:"status"`
+	Result     ActionResultEnum   `json:"result"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Customer struct {
+	ID         pgtype.UUID        `json:"id"`
+	TenantID   pgtype.UUID        `json:"tenant_id"`
+	ExternalID string             `json:"external_id"`
+	Email      string             `json:"email"`
+	Name       string             `json:"name"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Event struct {
+	ID         pgtype.UUID        `json:"id"`
+	TenantID   pgtype.UUID        `json:"tenant_id"`
+	ProviderID pgtype.UUID        `json:"provider_id"`
+	EventType  EventTypeEnum      `json:"event_type"`
+	EventID    string             `json:"event_id"`
+	Status     EventStatusEnum    `json:"status"`
+	Data       []byte             `json:"data"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Integration struct {
+	ID         pgtype.UUID        `json:"id"`
+	TenantID   pgtype.UUID        `json:"tenant_id"`
+	ProviderID pgtype.UUID        `json:"provider_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Leak struct {
+	ID         pgtype.UUID        `json:"id"`
+	TenantID   pgtype.UUID        `json:"tenant_id"`
+	CustomerID pgtype.UUID        `json:"customer_id"`
+	LeakType   LeakTypeEnum       `json:"leak_type"`
+	Amount     pgtype.Numeric     `json:"amount"`
+	Confidence int32              `json:"confidence"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	PaymentID  pgtype.UUID        `json:"payment_id"`
+}
+
+type Payment struct {
+	ID          pgtype.UUID        `json:"id"`
+	TenantID    pgtype.UUID        `json:"tenant_id"`
+	CustomerID  pgtype.UUID        `json:"customer_id"`
+	ExternalID  string             `json:"external_id"`
+	Amount      pgtype.Numeric     `json:"amount"`
+	Currency    string             `json:"currency"`
+	Status      PaymentStatusEnum  `json:"status"`
+	PaymentType PaymentTypeEnum    `json:"payment_type"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Provider struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
 
 type Tenant struct {
 	ID        pgtype.UUID        `json:"id"`
@@ -17,9 +444,11 @@ type Tenant struct {
 }
 
 type User struct {
-	ID        pgtype.UUID        `json:"id"`
-	Email     string             `json:"email"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID         pgtype.UUID        `json:"id"`
+	TenantID   pgtype.UUID        `json:"tenant_id"`
+	Email      string             `json:"email"`
+	Name       string             `json:"name"`
+	ExternalID *string            `json:"external_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
