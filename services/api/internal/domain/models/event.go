@@ -28,7 +28,7 @@ type Event struct {
 	EventType  EventTypeEnum   `json:"event_type"`
 	EventID    string          `json:"event_id"`
 	Status     EventStatusEnum `json:"status"`
-	Data       interface{}     `json:"data"`
+	Data       any             `json:"data"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 }
@@ -51,7 +51,7 @@ type CreateEventParams struct {
 	EventType  EventTypeEnum   `json:"event_type"`
 	EventID    string          `json:"event_id"`
 	Status     EventStatusEnum `json:"status"`
-	Data       interface{}     `json:"data"`
+	Data       any             `json:"data"`
 }
 
 // UpdateEventParams represents parameters for updating an existing Event.
