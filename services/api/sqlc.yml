@@ -7,7 +7,7 @@ sql:
     # services/api/sqlc.yml
 
     # …
-    schema: "./migrations/*.up.sql"
+    schema: "./migrations/[0-9][0-9][0-9]_*.up.sql"
     # …
     gen:
       go:
@@ -17,3 +17,11 @@ sql:
         emit_json_tags: true
         emit_prepared_queries: true
         emit_interface: true
+        emit_pointers_for_null_types: true
+        overrides:
+        - db_type: "uuid"
+          go_type:
+            import: "github.com/jackc/pgx/v5/pgtype"
+            type: "UUID"
+        - db_type: "CITEXT"
+          go_type: "string"
