@@ -53,16 +53,16 @@ api-lint:
 	@cd $(API_SERVICE_PATH) && golangci-lint run --config .golangci.yml && \
 		printf "$(GREEN)✓ API linting passed$(NC)\n"
 
-## api-fmt: Format Go code in API service
+## api-fmt: Format Go code and organize imports in API service
 api-fmt:
 	@printf "$(YELLOW)🎨 Formatting API code...$(NC)\n"
-	cd $(API_SERVICE_PATH) && gofmt -s -w .
+	cd $(API_SERVICE_PATH) && goimports -w . && gofmt -s -w .
 	@printf "$(GREEN)✓ API code formatted$(NC)\n"
 
-## api-fmt-check: Check if API code is formatted
+## api-fmt-check: Check if API code is formatted and imports are organized
 api-fmt-check:
 	@printf "$(YELLOW)📋 Checking API code formatting...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && test -z "$$(gofmt -l .)" || (echo "$(RED)❌ Code not formatted, run 'make api-fmt'$(NC)\n" && exit 1)
+	@cd $(API_SERVICE_PATH) && (test -z "$$(goimports -l .)" && test -z "$$(gofmt -l .)") || (echo "$(RED)❌ Code not formatted, run 'make api-fmt'$(NC)\n" && exit 1)
 	@printf "$(GREEN)✓ API code is properly formatted$(NC)\n"
 
 ## api-vet: Run go vet for the API service
