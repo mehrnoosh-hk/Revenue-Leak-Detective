@@ -12,6 +12,8 @@ import (
 type Repository interface {
 	HealthRepository
 	UserRepository
+	EventsRepository
+	ActionsRepository
 }
 
 // HealthRepository defines the interface for health-related database operations
@@ -29,6 +31,22 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (models.User, error)
 	UpdateUser(ctx context.Context, arg models.UpdateUserParams) (models.User, error)
+}
+
+// EventsRepository defines the interface for events-related database operations
+type EventsRepository interface {
+	CreateEvent(ctx context.Context, arg models.CreateEventParams) (models.Event, error)
+	DeleteEvent(ctx context.Context, id uuid.UUID) (int64, error)
+	GetAllEvents(ctx context.Context) ([]models.Event, error)
+	GetEventById(ctx context.Context, id uuid.UUID) (models.Event, error)
+	UpdateEvent(ctx context.Context, arg models.UpdateEventParams) (models.Event, error)
+}
+
+// ActionsRepository defines the interface for actions-related database operations
+type ActionsRepository interface {
+	CreateAction(ctx context.Context, arg models.CreateActionParams) (models.Action, error)
+	DeleteAction(ctx context.Context, id uuid.UUID) (int64, error)
+	GetAllActions(ctx context.Context) ([]models.Action, error)
 }
 
 // Database abstracts the database connection
