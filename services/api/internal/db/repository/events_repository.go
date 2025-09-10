@@ -138,7 +138,7 @@ func toEventDomain(e db.Event) models.Event {
 		EventType:  models.EventTypeEnum(e.EventType),
 		EventID:    e.EventID,
 		Status:     models.EventStatusEnum(e.Status),
-		Data:       interface{}(e.Data),
+		Data:       any(e.Data),
 		CreatedAt:  e.CreatedAt.Time,
 		UpdatedAt:  e.UpdatedAt.Time,
 	}
