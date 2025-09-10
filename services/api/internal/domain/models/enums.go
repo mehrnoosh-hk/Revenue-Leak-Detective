@@ -12,63 +12,63 @@ const (
 	ActionResultEnumSuccess ActionResultEnum = "success"
 	ActionResultEnumFailure ActionResultEnum = "failure"
 	ActionResultEnumPending ActionResultEnum = "pending"
-	ActionResultEnumOther ActionResultEnum = "other"
+	ActionResultEnumOther   ActionResultEnum = "other"
 )
 
 type ActionStatusEnum string
 
 const (
-	ActionStatusEnumPending ActionStatusEnum = "pending"
+	ActionStatusEnumPending  ActionStatusEnum = "pending"
 	ActionStatusEnumApproved ActionStatusEnum = "approved"
 	ActionStatusEnumModified ActionStatusEnum = "modified"
-	ActionStatusEnumDenied ActionStatusEnum = "denied"
+	ActionStatusEnumDenied   ActionStatusEnum = "denied"
 )
 
 type ActionTypeEnum string
 
 const (
 	ActionTypeEnumRetryPayment ActionTypeEnum = "retry_payment"
-	ActionTypeEnumOutreach ActionTypeEnum = "outreach"
-	ActionTypeEnumLinearTask ActionTypeEnum = "linear_task"
-	ActionTypeEnumEmail ActionTypeEnum = "email"
-	ActionTypeEnumOther ActionTypeEnum = "other"
+	ActionTypeEnumOutreach     ActionTypeEnum = "outreach"
+	ActionTypeEnumLinearTask   ActionTypeEnum = "linear_task"
+	ActionTypeEnumEmail        ActionTypeEnum = "email"
+	ActionTypeEnumOther        ActionTypeEnum = "other"
 )
 
 type EventStatusEnum string
 
 const (
-	EventStatusEnumPending EventStatusEnum = "pending"
+	EventStatusEnumPending   EventStatusEnum = "pending"
 	EventStatusEnumProcessed EventStatusEnum = "processed"
-	EventStatusEnumFailed EventStatusEnum = "failed"
+	EventStatusEnumFailed    EventStatusEnum = "failed"
 )
 
 type EventTypeEnum string
 
 const (
-	EventTypeEnumPaymentFailed EventTypeEnum = "payment_failed"
+	EventTypeEnumPaymentFailed    EventTypeEnum = "payment_failed"
 	EventTypeEnumPaymentSucceeded EventTypeEnum = "payment_succeeded"
-	EventTypeEnumPaymentRefunded EventTypeEnum = "payment_refunded"
-	EventTypeEnumPaymentUpdated EventTypeEnum = "payment_updated"
+	EventTypeEnumPaymentRefunded  EventTypeEnum = "payment_refunded"
+	EventTypeEnumPaymentUpdated   EventTypeEnum = "payment_updated"
 )
 
 type LeakTypeEnum string
 
 const (
-	LeakTypeEnumFailedPayments LeakTypeEnum = "failed_payments"
-	LeakTypeEnumUnbilledUsage LeakTypeEnum = "unbilled_usage"
-	LeakTypeEnumQuietChurn LeakTypeEnum = "quiet_churn"
+	LeakTypeEnumFailedPayments       LeakTypeEnum = "failed_payments"
+	LeakTypeEnumUnbilledUsage        LeakTypeEnum = "unbilled_usage"
+	LeakTypeEnumQuietChurn           LeakTypeEnum = "quiet_churn"
 	LeakTypeEnumCouponDiscountMisuse LeakTypeEnum = "coupon_discount_misuse"
-	LeakTypeEnumTrialForever LeakTypeEnum = "trial_forever"
-	LeakTypeEnumOther LeakTypeEnum = "other"
+	LeakTypeEnumTrialForever         LeakTypeEnum = "trial_forever"
+	LeakTypeEnumOther                LeakTypeEnum = "other"
 )
 
 type PaymentStatusEnum string
 
 const (
-	PaymentStatusEnumPending PaymentStatusEnum = "pending"
+	PaymentStatusEnumPending   PaymentStatusEnum = "pending"
 	PaymentStatusEnumSucceeded PaymentStatusEnum = "succeeded"
-	PaymentStatusEnumFailed PaymentStatusEnum = "failed"
-	PaymentStatusEnumOther PaymentStatusEnum = "other"
+	PaymentStatusEnumFailed    PaymentStatusEnum = "failed"
+	PaymentStatusEnumOther     PaymentStatusEnum = "other"
 )
 
 type PaymentTypeEnum string
@@ -80,9 +80,8 @@ const (
 
 type NullActionTypeEnum struct {
 	ActionTypeEnum ActionTypeEnum `json:"action_type_enum"`
-	Valid            bool             `json:"valid"` // Valid is true if ActionTypeEnum is not NULL
+	Valid          bool           `json:"valid"` // Valid is true if ActionTypeEnum is not NULL
 }
-
 
 type NullActionResultEnum struct {
 	ActionResultEnum ActionResultEnum `json:"action_result_enum"`
@@ -96,10 +95,10 @@ type NullActionStatusEnum struct {
 
 type NullEventTypeEnum struct {
 	EventTypeEnum EventTypeEnum `json:"event_type_enum"`
-	Valid            bool             `json:"valid"` // Valid is true if EventTypeEnum is not NULL
+	Valid         bool          `json:"valid"` // Valid is true if EventTypeEnum is not NULL
 }
 
 type NullEventStatusEnum struct {
 	EventStatusEnum EventStatusEnum `json:"event_status_enum"`
-	Valid            bool             `json:"valid"` // Valid is true if EventStatusEnum is not NULL
+	Valid           bool            `json:"valid"` // Valid is true if EventStatusEnum is not NULL
 }

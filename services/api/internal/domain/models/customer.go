@@ -6,33 +6,34 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Customer represents the domain model for Customer
 type Customer struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-	ExternalID string `json:"external_id"`
-	Email string `json:"email"`
-	Name string `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	ExternalID string    `json:"external_id"`
+	Email      string    `json:"email"`
+	Name       string    `json:"name"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // CreateCustomerParams represents parameters for creating a Customer
 type CreateCustomerParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	ExternalID string `json:"external_id"`
-	Email string `json:"email"`
-	Name string `json:"name"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	ExternalID string    `json:"external_id"`
+	Email      string    `json:"email"`
+	Name       string    `json:"name"`
 }
 
 // UpdateCustomerParams represents parameters for updating a Customer
 type UpdateCustomerParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	TenantID *uuid.UUID `json:"tenant_id"`
-	ExternalID *string `json:"external_id"`
-	Email *string `json:"email"`
-	Name *string `json:"name"`
+	ID         uuid.UUID  `json:"id"` // Primary key
+	TenantID   *uuid.UUID `json:"tenant_id"`
+	ExternalID *string    `json:"external_id"`
+	Email      *string    `json:"email"`
+	Name       *string    `json:"name"`
 }

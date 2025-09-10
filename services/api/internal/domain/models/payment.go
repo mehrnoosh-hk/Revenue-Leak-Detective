@@ -6,42 +6,43 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Payment represents the domain model for Payment
 type Payment struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-	CustomerID uuid.UUID `json:"customer_id"`
-	ExternalID string `json:"external_id"`
-	Amount float32 `json:"amount"`
-	Currency string `json:"currency"`
-	Status PaymentStatusEnum `json:"status"`
-	PaymentType PaymentTypeEnum `json:"payment_type"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uuid.UUID         `json:"id"`
+	TenantID    uuid.UUID         `json:"tenant_id"`
+	CustomerID  uuid.UUID         `json:"customer_id"`
+	ExternalID  string            `json:"external_id"`
+	Amount      float32           `json:"amount"`
+	Currency    string            `json:"currency"`
+	Status      PaymentStatusEnum `json:"status"`
+	PaymentType PaymentTypeEnum   `json:"payment_type"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 }
 
 // CreatePaymentParams represents parameters for creating a Payment
 type CreatePaymentParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	CustomerID uuid.UUID `json:"customer_id"`
-	ExternalID string `json:"external_id"`
-	Amount float32 `json:"amount"`
-	Currency string `json:"currency"`
-	Status PaymentStatusEnum `json:"status"`
-	PaymentType PaymentTypeEnum `json:"payment_type"`
+	TenantID    uuid.UUID         `json:"tenant_id"`
+	CustomerID  uuid.UUID         `json:"customer_id"`
+	ExternalID  string            `json:"external_id"`
+	Amount      float32           `json:"amount"`
+	Currency    string            `json:"currency"`
+	Status      PaymentStatusEnum `json:"status"`
+	PaymentType PaymentTypeEnum   `json:"payment_type"`
 }
 
 // UpdatePaymentParams represents parameters for updating a Payment
 type UpdatePaymentParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	TenantID *uuid.UUID `json:"tenant_id"`
-	CustomerID *uuid.UUID `json:"customer_id"`
-	ExternalID *string `json:"external_id"`
-	Amount *float32 `json:"amount"`
-	Currency *string `json:"currency"`
-	Status *PaymentStatusEnum `json:"status"`
-	PaymentType *PaymentTypeEnum `json:"payment_type"`
+	ID          uuid.UUID          `json:"id"` // Primary key
+	TenantID    *uuid.UUID         `json:"tenant_id"`
+	CustomerID  *uuid.UUID         `json:"customer_id"`
+	ExternalID  *string            `json:"external_id"`
+	Amount      *float32           `json:"amount"`
+	Currency    *string            `json:"currency"`
+	Status      *PaymentStatusEnum `json:"status"`
+	PaymentType *PaymentTypeEnum   `json:"payment_type"`
 }

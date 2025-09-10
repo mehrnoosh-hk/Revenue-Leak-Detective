@@ -6,18 +6,19 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // User represents the domain model for User
 type User struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-	Email string `json:"email"`
-	Name string `json:"name"`
-	ExternalID *string `json:"external_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	Email      string    `json:"email"`
+	Name       string    `json:"name"`
+	ExternalID *string   `json:"external_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type CreateUserParams struct {
@@ -28,7 +29,7 @@ type CreateUserParams struct {
 
 type UpdateUserParams struct {
 	ID         uuid.UUID `json:"id"`
-	Email      *string     `json:"email"`
-	Name       *string     `json:"name"`
-	ExternalID *string     `json:"external_id"`
+	Email      *string   `json:"email"`
+	Name       *string   `json:"name"`
+	ExternalID *string   `json:"external_id"`
 }

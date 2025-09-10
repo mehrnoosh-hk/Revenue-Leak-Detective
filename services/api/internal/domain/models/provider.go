@@ -6,13 +6,14 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Provider represents the domain model for Provider
 type Provider struct {
-	ID uuid.UUID `json:"id"`
-	Name string `json:"name"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -24,6 +25,6 @@ type CreateProviderParams struct {
 
 // UpdateProviderParams represents parameters for updating a Provider
 type UpdateProviderParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	Name *string `json:"name"`
+	ID   uuid.UUID `json:"id"` // Primary key
+	Name *string   `json:"name"`
 }

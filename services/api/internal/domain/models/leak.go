@@ -6,36 +6,37 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Leak represents the domain model for Leak
 type Leak struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-	CustomerID uuid.UUID `json:"customer_id"`
-	LeakType LeakTypeEnum `json:"leak_type"`
-	Amount float32 `json:"amount"`
-	Confidence int32 `json:"confidence"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uuid.UUID    `json:"id"`
+	TenantID   uuid.UUID    `json:"tenant_id"`
+	CustomerID uuid.UUID    `json:"customer_id"`
+	LeakType   LeakTypeEnum `json:"leak_type"`
+	Amount     float32      `json:"amount"`
+	Confidence int32        `json:"confidence"`
+	CreatedAt  time.Time    `json:"created_at"`
+	UpdatedAt  time.Time    `json:"updated_at"`
 }
 
 // CreateLeakParams represents parameters for creating a Leak
 type CreateLeakParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	CustomerID uuid.UUID `json:"customer_id"`
-	LeakType LeakTypeEnum `json:"leak_type"`
-	Amount float32 `json:"amount"`
-	Confidence int32 `json:"confidence"`
+	TenantID   uuid.UUID    `json:"tenant_id"`
+	CustomerID uuid.UUID    `json:"customer_id"`
+	LeakType   LeakTypeEnum `json:"leak_type"`
+	Amount     float32      `json:"amount"`
+	Confidence int32        `json:"confidence"`
 }
 
 // UpdateLeakParams represents parameters for updating a Leak
 type UpdateLeakParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	TenantID *uuid.UUID `json:"tenant_id"`
-	CustomerID *uuid.UUID `json:"customer_id"`
-	LeakType *LeakTypeEnum `json:"leak_type"`
-	Amount *float32 `json:"amount"`
-	Confidence *int32 `json:"confidence"`
+	ID         uuid.UUID     `json:"id"` // Primary key
+	TenantID   *uuid.UUID    `json:"tenant_id"`
+	CustomerID *uuid.UUID    `json:"customer_id"`
+	LeakType   *LeakTypeEnum `json:"leak_type"`
+	Amount     *float32      `json:"amount"`
+	Confidence *int32        `json:"confidence"`
 }

@@ -6,27 +6,28 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Integration represents the domain model for Integration
 type Integration struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
+	ID         uuid.UUID `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
 	ProviderID uuid.UUID `json:"provider_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // CreateIntegrationParams represents parameters for creating a Integration
 type CreateIntegrationParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
 	ProviderID uuid.UUID `json:"provider_id"`
 }
 
 // UpdateIntegrationParams represents parameters for updating a Integration
 type UpdateIntegrationParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	TenantID *uuid.UUID `json:"tenant_id"`
+	ID         uuid.UUID  `json:"id"` // Primary key
+	TenantID   *uuid.UUID `json:"tenant_id"`
 	ProviderID *uuid.UUID `json:"provider_id"`
 }

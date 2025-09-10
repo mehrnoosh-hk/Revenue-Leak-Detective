@@ -1,10 +1,11 @@
-// Package models contains domain models for the bussiness entities.
+// Package models contains domain models for the business entities.
 // This package defines the core data structures and types used throughout
 // the application.
 package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -21,15 +22,15 @@ import (
 //   - CreatedAt: Timestamp when the event was first created
 //   - UpdatedAt: Timestamp when the event was last modified
 type Event struct {
-	ID uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-	ProviderID uuid.UUID `json:"provider_id"`
-	EventType EventTypeEnum `json:"event_type"`
-	EventID string `json:"event_id"`
-	Status EventStatusEnum `json:"status"`
-	Data interface{} `json:"data"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uuid.UUID       `json:"id"`
+	TenantID   uuid.UUID       `json:"tenant_id"`
+	ProviderID uuid.UUID       `json:"provider_id"`
+	EventType  EventTypeEnum   `json:"event_type"`
+	EventID    string          `json:"event_id"`
+	Status     EventStatusEnum `json:"status"`
+	Data       interface{}     `json:"data"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
 }
 
 // CreateEventParams represents parameters for creating a new Event.
@@ -45,12 +46,12 @@ type Event struct {
 //   - Status: Initial status, typically EventStatusPending or EventStatusReceived
 //   - Data: Event payload, can be any JSON-serializable data structure
 type CreateEventParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	ProviderID uuid.UUID `json:"provider_id"`
-	EventType EventTypeEnum `json:"event_type"`
-	EventID string `json:"event_id"`
-	Status EventStatusEnum `json:"status"`
-	Data interface{} `json:"data"`
+	TenantID   uuid.UUID       `json:"tenant_id"`
+	ProviderID uuid.UUID       `json:"provider_id"`
+	EventType  EventTypeEnum   `json:"event_type"`
+	EventID    string          `json:"event_id"`
+	Status     EventStatusEnum `json:"status"`
+	Data       interface{}     `json:"data"`
 }
 
 // UpdateEventParams represents parameters for updating an existing Event.
@@ -69,11 +70,11 @@ type CreateEventParams struct {
 //
 // Note: UpdatedAt timestamp is handled automatically by the persistence layer.
 type UpdateEventParams struct {
-	TenantID   *uuid.UUID         `json:"tenant_id"`
-	ProviderID *uuid.UUID         `json:"provider_id"`
-	EventType  *EventTypeEnum `json:"event_type"`
-	EventID    *string             `json:"event_id"`
+	TenantID   *uuid.UUID       `json:"tenant_id"`
+	ProviderID *uuid.UUID       `json:"provider_id"`
+	EventType  *EventTypeEnum   `json:"event_type"`
+	EventID    *string          `json:"event_id"`
 	Status     *EventStatusEnum `json:"status"`
 	Data       any              `json:"data"`
-	ID         uuid.UUID         `json:"id"`
+	ID         uuid.UUID        `json:"id"`
 }

@@ -6,14 +6,15 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // Tenant represents the domain model for Tenant
 type Tenant struct {
-	ID uuid.UUID `json:"id"`
-	Email string `json:"email"`
-	Name string `json:"name"`
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -21,12 +22,12 @@ type Tenant struct {
 // CreateTenantParams represents parameters for creating a Tenant
 type CreateTenantParams struct {
 	Email string `json:"email"`
-	Name string `json:"name"`
+	Name  string `json:"name"`
 }
 
 // UpdateTenantParams represents parameters for updating a Tenant
 type UpdateTenantParams struct {
-	ID uuid.UUID `json:"id"` // Primary key
-	Email *string `json:"email"`
-	Name *string `json:"name"`
+	ID    uuid.UUID `json:"id"` // Primary key
+	Email *string   `json:"email"`
+	Name  *string   `json:"name"`
 }
