@@ -1,10 +1,7 @@
--- actions table queries
-
--- name: GetActionByIDForTenant :one
-SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
-FROM actions a
-JOIN leaks l ON l.id = a.leak_id
-WHERE a.id = $1 AND l.tenant_id = $2;
+-- name: GetActionByID :one
+SELECT id, leak_id, action_type, status, result, created_at, updated_at
+FROM actions
+WHERE id = $1;
 
 -- name: CreateAction :one
 INSERT INTO actions (leak_id, action_type, status, result) VALUES ($1, $2, $3, $4) RETURNING id, leak_id, action_type, status, result, created_at, updated_at;

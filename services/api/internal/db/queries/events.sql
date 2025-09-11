@@ -1,5 +1,3 @@
--- events table queries
-
 -- name: GetEventByID :one
 SELECT 
   id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
