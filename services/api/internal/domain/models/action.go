@@ -37,12 +37,3 @@ type UpdateActionParams struct {
 	Status     *NullActionStatusEnum `json:"status"`
 	Result     *ActionResultEnum     `json:"result"`
 }
-
-type GetActionByIDForTenantParams struct {
-	ID       uuid.UUID `json:"id"`
-	TenantID uuid.UUID `json:"tenant_id"`
-}
-
-type GetAllActionsForTenantParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-}

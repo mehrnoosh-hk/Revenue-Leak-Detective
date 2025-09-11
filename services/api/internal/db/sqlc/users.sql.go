@@ -95,7 +95,6 @@ func (q *Queries) GetAllUsersForTenant(ctx context.Context, tenantID pgtype.UUID
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-
 SELECT id, email, name, external_id, created_at, updated_at FROM users WHERE email = $1
 `
 
@@ -108,7 +107,6 @@ type GetUserByEmailRow struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
-// users table queries
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i GetUserByEmailRow

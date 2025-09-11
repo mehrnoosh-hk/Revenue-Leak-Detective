@@ -54,22 +54,14 @@ func (q *Queries) DeleteAction(ctx context.Context, id pgtype.UUID) (int64, erro
 	return result.RowsAffected(), nil
 }
 
-const getActionByIDForTenant = `-- name: GetActionByIDForTenant :one
-
-SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
-FROM actions a
-JOIN leaks l ON l.id = a.leak_id
-WHERE a.id = $1 AND l.tenant_id = $2
+const getActionByID = `-- name: GetActionByID :one
+SELECT id, leak_id, action_type, status, result, created_at, updated_at
+FROM actions
+WHERE id = $1
 `
 
-type GetActionByIDForTenantParams struct {
-	ID       pgtype.UUID `json:"id"`
-	TenantID pgtype.UUID `json:"tenant_id"`
-}
-
-// actions table queries
-func (q *Queries) GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error) {
-	row := q.db.QueryRow(ctx, getActionByIDForTenant, arg.ID, arg.TenantID)
+func (q *Queries) GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error) {
+	row := q.db.QueryRow(ctx, getActionByID, id)
 	var i Action
 	err := row.Scan(
 		&i.ID,

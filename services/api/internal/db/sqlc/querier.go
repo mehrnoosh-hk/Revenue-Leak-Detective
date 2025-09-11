@@ -17,14 +17,11 @@ type Querier interface {
 	DeleteAction(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteEvent(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
-	// actions table queries
-	GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error)
+	GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error)
 	GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error)
 	GetAllEventsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Event, error)
 	GetAllUsersForTenant(ctx context.Context, tenantID pgtype.UUID) ([]User, error)
-	// events table queries
 	GetEventByID(ctx context.Context, id pgtype.UUID) (Event, error)
-	// users table queries
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error)
 	UpdateAction(ctx context.Context, arg UpdateActionParams) (Action, error)

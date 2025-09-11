@@ -99,14 +99,12 @@ func (q *Queries) GetAllEventsForTenant(ctx context.Context, tenantID pgtype.UUI
 }
 
 const getEventByID = `-- name: GetEventByID :one
-
 SELECT 
   id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
 FROM events 
 WHERE id = $1
 `
 
-// events table queries
 func (q *Queries) GetEventByID(ctx context.Context, id pgtype.UUID) (Event, error) {
 	row := q.db.QueryRow(ctx, getEventByID, id)
 	var i Event

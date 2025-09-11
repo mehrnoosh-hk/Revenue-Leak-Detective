@@ -26,7 +26,7 @@ type HealthRepository interface {
 type UserRepository interface {
 	CreateUser(ctx context.Context, arg models.CreateUserParams) (models.User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) (int64, error)
-	GetAllUsers(ctx context.Context) ([]models.User, error)
+	GetAllUsersForTenant(ctx context.Context, tenantID uuid.UUID) ([]models.User, error)
 	// users table queries
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (models.User, error)
@@ -37,7 +37,7 @@ type UserRepository interface {
 type EventsRepository interface {
 	CreateEvent(ctx context.Context, arg models.CreateEventParams) (models.Event, error)
 	DeleteEvent(ctx context.Context, id uuid.UUID) (int64, error)
-	GetAllEvents(ctx context.Context) ([]models.Event, error)
+	GetAllEventsForTenant(ctx context.Context, tenantID uuid.UUID) ([]models.Event, error)
 	GetEventById(ctx context.Context, id uuid.UUID) (models.Event, error)
 	UpdateEvent(ctx context.Context, arg models.UpdateEventParams) (models.Event, error)
 }
@@ -47,7 +47,7 @@ type ActionsRepository interface {
 	CreateAction(ctx context.Context, arg models.CreateActionParams) (models.Action, error)
 	DeleteAction(ctx context.Context, id uuid.UUID) (int64, error)
 	GetAllActionsForTenant(ctx context.Context, tenantID uuid.UUID) ([]models.Action, error)
-	GetActionByIDForTenant(ctx context.Context, arg models.GetActionByIDForTenantParams) (models.Action, error)
+	GetActionByID(ctx context.Context, id uuid.UUID) (models.Action, error)
 }
 
 // Database abstracts the database connection
