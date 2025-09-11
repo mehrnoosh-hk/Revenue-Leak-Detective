@@ -4,17 +4,17 @@
 
 # Shell configuration
 SHELL := /bin/sh
-.SHELLFLAGS := -c
+.SHELLFLAGS := -ec
 
 # Colors for output
-RED := \e[31m
-GREEN := \e[32m
-YELLOW := \e[33m
-BLUE := \e[34m
-MAGENTA := \e[35m
-CYAN := \e[36m
-BOLD := \e[1m
-NC := \e[0m
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+MAGENTA := \033[35m
+CYAN := \033[36m
+BOLD := \033[1m
+NC := \033[0m
 
 # Project metadata
 PROJECT_NAME := revenue-leak-detective
