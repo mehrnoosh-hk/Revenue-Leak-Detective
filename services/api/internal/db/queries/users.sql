@@ -12,8 +12,8 @@ VALUES (
 )
 RETURNING id, email, name, external_id, created_at, updated_at;
 
--- name: GetAllUsers :many
-SELECT id, email, name, external_id, created_at, updated_at FROM users;
+-- name: GetAllUsersForTenant :many
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE tenant_id = $1;
 
 -- name: GetUserById :one
 SELECT id, email, name, external_id, created_at, updated_at FROM users WHERE id = $1;
