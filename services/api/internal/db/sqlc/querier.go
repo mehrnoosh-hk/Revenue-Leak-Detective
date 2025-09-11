@@ -20,8 +20,8 @@ type Querier interface {
 	// actions table queries
 	GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error)
 	GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error)
-	GetAllEvents(ctx context.Context) ([]Event, error)
-	GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error)
+	GetAllEventsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Event, error)
+	GetAllUsersForTenant(ctx context.Context, tenantID pgtype.UUID) ([]User, error)
 	// events table queries
 	GetEventByID(ctx context.Context, id pgtype.UUID) (Event, error)
 	// users table queries
