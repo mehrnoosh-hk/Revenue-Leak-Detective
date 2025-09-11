@@ -46,7 +46,7 @@ type EventsRepository interface {
 type ActionsRepository interface {
 	CreateAction(ctx context.Context, arg models.CreateActionParams) (models.Action, error)
 	DeleteAction(ctx context.Context, id uuid.UUID) (int64, error)
-	GetAllActions(ctx context.Context) ([]models.Action, error)
+	GetAllActionsForTenant(ctx context.Context, tenantID uuid.UUID) ([]models.Action, error)
 }
 
 // Database abstracts the database connection

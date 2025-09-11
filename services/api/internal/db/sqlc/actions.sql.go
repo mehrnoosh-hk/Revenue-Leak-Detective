@@ -54,14 +54,22 @@ func (q *Queries) DeleteAction(ctx context.Context, id pgtype.UUID) (int64, erro
 	return result.RowsAffected(), nil
 }
 
-const getActionByID = `-- name: GetActionByID :one
+const getActionByIDForTenant = `-- name: GetActionByIDForTenant :one
 
-SELECT id, leak_id, action_type, status, result, created_at, updated_at FROM actions WHERE id = $1
+SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
+FROM actions a
+JOIN leaks l ON l.id = a.leak_id
+WHERE a.id = $1 AND l.tenant_id = $2
 `
 
+type GetActionByIDForTenantParams struct {
+	ID       pgtype.UUID `json:"id"`
+	TenantID pgtype.UUID `json:"tenant_id"`
+}
+
 // actions table queries
-func (q *Queries) GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error) {
-	row := q.db.QueryRow(ctx, getActionByID, id)
+func (q *Queries) GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error) {
+	row := q.db.QueryRow(ctx, getActionByIDForTenant, arg.ID, arg.TenantID)
 	var i Action
 	err := row.Scan(
 		&i.ID,
@@ -75,12 +83,15 @@ func (q *Queries) GetActionByID(ctx context.Context, id pgtype.UUID) (Action, er
 	return i, err
 }
 
-const getAllActions = `-- name: GetAllActions :many
-SELECT id, leak_id, action_type, status, result, created_at, updated_at FROM actions
+const getAllActionsForTenant = `-- name: GetAllActionsForTenant :many
+SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
+FROM actions a
+JOIN leaks l ON l.id = a.leak_id
+WHERE l.tenant_id = $1
 `
 
-func (q *Queries) GetAllActions(ctx context.Context) ([]Action, error) {
-	rows, err := q.db.Query(ctx, getAllActions)
+func (q *Queries) GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error) {
+	rows, err := q.db.Query(ctx, getAllActionsForTenant, tenantID)
 	if err != nil {
 		return nil, err
 	}
