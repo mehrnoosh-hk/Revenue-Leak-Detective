@@ -18,8 +18,8 @@ type Querier interface {
 	DeleteEvent(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	// actions table queries
-	GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error)
-	GetAllActions(ctx context.Context) ([]Action, error)
+	GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error)
+	GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error)
 	GetAllEvents(ctx context.Context) ([]Event, error)
 	GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error)
 	// events table queries

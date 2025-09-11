@@ -47,6 +47,7 @@ type ActionsRepository interface {
 	CreateAction(ctx context.Context, arg models.CreateActionParams) (models.Action, error)
 	DeleteAction(ctx context.Context, id uuid.UUID) (int64, error)
 	GetAllActionsForTenant(ctx context.Context, tenantID uuid.UUID) ([]models.Action, error)
+	GetActionByIDForTenant(ctx context.Context, arg models.GetActionByIDForTenantParams) (models.Action, error)
 }
 
 // Database abstracts the database connection

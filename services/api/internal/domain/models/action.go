@@ -38,13 +38,11 @@ type UpdateActionParams struct {
 	Result     *ActionResultEnum     `json:"result"`
 }
 
-// GetActionByIDRow represents query-specific parameters/results for action operations
-// This struct is auto-generated from sqlc queries and should be reviewed before using
-type GetActionByIDRow struct {
-	ID         uuid.UUID            `json:"id"`
-	LeakID     uuid.UUID            `json:"leak_id"`
-	ActionType NullActionTypeEnum   `json:"action_type"`
-	Status     NullActionStatusEnum `json:"status"`
-	CreatedAt  time.Time            `json:"created_at"`
-	UpdatedAt  time.Time            `json:"updated_at"`
+type GetActionByIDForTenantParams struct {
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+}
+
+type GetAllActionsForTenantParams struct {
+	TenantID uuid.UUID `json:"tenant_id"`
 }
