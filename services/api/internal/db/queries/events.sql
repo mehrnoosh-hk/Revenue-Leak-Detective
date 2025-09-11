@@ -1,13 +1,20 @@
 -- events table queries
 
 -- name: GetEventByID :one
-SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at FROM events WHERE id = $1;
+SELECT 
+  id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events 
+WHERE id = $1;
 
 -- name: CreateEvent :one
-INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at;
+INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data) 
+VALUES ($1, $2, $3, $4, $5, $6) 
+RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at;
 
--- name: GetAllEvents :many
-SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at FROM events;
+-- name: GetAllEventsForTenant :many
+SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events 
+WHERE tenant_id = $1;
 
 -- name: UpdateEvent :one
 UPDATE events
