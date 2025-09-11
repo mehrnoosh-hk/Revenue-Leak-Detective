@@ -12,7 +12,9 @@ import (
 )
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at
+INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data) 
+VALUES ($1, $2, $3, $4, $5, $6) 
+RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at
 `
 
 type CreateEventParams struct {
@@ -60,12 +62,14 @@ func (q *Queries) DeleteEvent(ctx context.Context, id pgtype.UUID) (int64, error
 	return result.RowsAffected(), nil
 }
 
-const getAllEvents = `-- name: GetAllEvents :many
-SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at FROM events
+const getAllEventsForTenant = `-- name: GetAllEventsForTenant :many
+SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events 
+WHERE tenant_id = $1
 `
 
-func (q *Queries) GetAllEvents(ctx context.Context) ([]Event, error) {
-	rows, err := q.db.Query(ctx, getAllEvents)
+func (q *Queries) GetAllEventsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Event, error) {
+	rows, err := q.db.Query(ctx, getAllEventsForTenant, tenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +100,10 @@ func (q *Queries) GetAllEvents(ctx context.Context) ([]Event, error) {
 
 const getEventByID = `-- name: GetEventByID :one
 
-SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at FROM events WHERE id = $1
+SELECT 
+  id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events 
+WHERE id = $1
 `
 
 // events table queries

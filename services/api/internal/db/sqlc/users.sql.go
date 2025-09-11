@@ -62,30 +62,22 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 	return result.RowsAffected(), nil
 }
 
-const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, name, external_id, created_at, updated_at FROM users
+const getAllUsersForTenant = `-- name: GetAllUsersForTenant :many
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE tenant_id = $1
 `
 
-type GetAllUsersRow struct {
-	ID         pgtype.UUID        `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	ExternalID *string            `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
-	rows, err := q.db.Query(ctx, getAllUsers)
+func (q *Queries) GetAllUsersForTenant(ctx context.Context, tenantID pgtype.UUID) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsersForTenant, tenantID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllUsersRow
+	var items []User
 	for rows.Next() {
-		var i GetAllUsersRow
+		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.TenantID,
 			&i.Email,
 			&i.Name,
 			&i.ExternalID,
