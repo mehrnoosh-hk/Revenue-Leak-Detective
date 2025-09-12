@@ -18,10 +18,10 @@ type Server struct {
 	server *http.Server
 }
 
-func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *DomainServices) error {
+func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *DomainServices, isDevelopment bool) error {
 
 	// Setup routes with services reference
-	s.SetupRoutes(logger, services)
+	s.SetupRoutes(logger, services, isDevelopment)
 
 	// Channel to listen for interrupt signals
 	quit := make(chan os.Signal, 1)
@@ -56,7 +56,7 @@ func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *Domai
 	return nil
 }
 
-func (s *Server) SetupRoutes(logger *slog.Logger, services *DomainServices) {
+func (s *Server) SetupRoutes(logger *slog.Logger, services *DomainServices, isDevelopment bool) {
 	// Apply middleware
 	handler := middleware.Chain(
 		s.mux,
@@ -64,6 +64,7 @@ func (s *Server) SetupRoutes(logger *slog.Logger, services *DomainServices) {
 		middleware.Logger(logger),
 		middleware.Recovery(logger),
 		middleware.CORS(),
+		middleware.TenantContext(logger, isDevelopment),
 	)
 
 	s.server.Handler = handler
