@@ -1,3 +1,5 @@
+// Package app provides the struct and methods for the App
+// app.go handles the main application methods and dependencies for the App
 package app
 
 import (
@@ -8,8 +10,9 @@ import (
 	"net/http"
 	"rdl-api/config"
 	"rdl-api/internal/db/repository"
-	sqlc "rdl-api/internal/db/sqlc"
+	db "rdl-api/internal/db/sqlc"
 	"rdl-api/internal/domain/health"
+	"rdl-api/internal/domain/services"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,26 +25,15 @@ type App struct {
 	config *config.Config
 	logger *slog.Logger
 
-	// Database layer
-	db      *pgxpool.Pool
-	queries *sqlc.Queries
-
 	// Repository layer
-	repoLayer *RepoLayer
+	pool    *pgxpool.Pool
+	queries *db.Queries
 
-	// Domain services
-	domainServices *DomainServices
+	// // Domain services
+	domainServices *services.DomainServices
 
 	// Server layer
 	server *Server
-}
-
-type RepoLayer struct {
-	healthRepo repository.HealthRepository
-}
-
-type DomainServices struct {
-	healthService health.HealthService
 }
 
 // Application errors
@@ -53,15 +45,14 @@ var (
 	ErrServerStartup          = errors.New("server startup failed")
 )
 
-// New creates a new App instance with basic dependencies properly initialized.
+// New creates a new App instance with minimal dependencies properly initialized.
 // This is the main entry point for dependency injection.
 func New(cfg *config.Config, logger *slog.Logger) *App {
+	logger.Info("Creating new App instance with minimal dependencies")
 	mux := http.NewServeMux()
 	return &App{
-		config:         cfg,
-		logger:         logger,
-		repoLayer:      &RepoLayer{},      // Initialize the struct
-		domainServices: &DomainServices{}, // Initialize the struct
+		config: cfg,
+		logger: logger,
 		server: &Server{
 			mux: mux,
 			server: &http.Server{
@@ -75,11 +66,15 @@ func New(cfg *config.Config, logger *slog.Logger) *App {
 	}
 }
 
-// SetDatabase sets the database connection and queries for the application.
-// This method allows for flexible database initialization and testing.
-func (a *App) SetDatabase(db *pgxpool.Pool) {
-	a.db = db
-	a.queries = sqlc.New(db)
+// SetDomainServices
+func (a *App) SetDomainServices() {
+
+	userService := services.NewUserService(a.pool, a.queries)
+	eventService := services.NewEventService(a.pool, a.queries)
+
+	fmt.Println("User service: ", userService)
+	fmt.Println("Event service: ", eventService)
+
 }
 
 // SetServer sets the HTTP server for the application.
@@ -105,7 +100,7 @@ func (a *App) setupDependencies() error {
 }
 
 func (a *App) StartServer(ctx context.Context) error {
-	return a.server.Start(ctx, a.logger, a.domainServices)
+	return a.server.Start(ctx, a.logger, a.domainServices, a.config.IsDevelopment())
 }
 
 // Config returns the application configuration.
@@ -134,7 +129,7 @@ func (a *App) RepoLayer() *RepoLayer {
 }
 
 // DomainServices returns the domain services.
-func (a *App) DomainServices() *DomainServices {
+func (a *App) DomainServices() *services.DomainServices {
 	return a.domainServices
 }
 
@@ -182,7 +177,7 @@ func (a *App) StartUp(ctx context.Context) error {
 
 	// Start the server
 	a.logger.Info("Server is ready to accept requests")
-	return a.server.Start(ctx, a.logger, a.domainServices)
+	return a.server.Start(ctx, a.logger, a.domainServices, a.config.IsDevelopment())
 }
 
 // HealthCheck performs a comprehensive health check of the application.

@@ -1,4 +1,3 @@
-// internal/db/repository/health_repository.go
 // health repository implementation HealthRepository interface which is part of repository interface
 package repository
 

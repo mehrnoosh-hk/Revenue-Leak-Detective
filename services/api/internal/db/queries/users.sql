@@ -1,5 +1,5 @@
 -- name: GetUserByEmail :one
-SELECT id, email, name, external_id, created_at, updated_at FROM users WHERE email = $1;
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE email = $1;
 
 -- name: CreateUser :one
 INSERT INTO users (email, name, external_id)
@@ -8,13 +8,13 @@ VALUES (
     $2, 
     CASE WHEN sqlc.narg('external_id')::VARCHAR(255) IS NOT NULL THEN sqlc.narg('external_id')::VARCHAR(255) ELSE NULL END
 )
-RETURNING id, email, name, external_id, created_at, updated_at;
+RETURNING id, tenant_id, email, name, external_id, created_at, updated_at;
 
--- name: GetAllUsersForTenant :many
-SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE tenant_id = $1;
+-- name: GetAllUsers :many
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users;
 
--- name: GetUserById :one
-SELECT id, email, name, external_id, created_at, updated_at FROM users WHERE id = $1;
+-- name: GetUserByID :one
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE id = $1;
 
 -- name: UpdateUser :one
 UPDATE users 
@@ -23,7 +23,7 @@ SET
     name = CASE WHEN sqlc.narg('name')::VARCHAR(255) IS NOT NULL THEN sqlc.narg('name')::VARCHAR(255) ELSE name END, 
     external_id = CASE WHEN sqlc.narg('external_id')::VARCHAR(255) IS NOT NULL THEN sqlc.narg('external_id')::VARCHAR(255) ELSE external_id END 
 WHERE id = $1 
-RETURNING id, email, name, external_id, created_at, updated_at;
+RETURNING id, tenant_id, email, name, external_id, created_at, updated_at;
 
 -- name: DeleteUser :execrows
 DELETE FROM users WHERE id = $1;

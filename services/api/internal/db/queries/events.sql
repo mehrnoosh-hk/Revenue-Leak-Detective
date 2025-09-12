@@ -9,10 +9,19 @@ INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data)
 VALUES ($1, $2, $3, $4, $5, $6) 
 RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at;
 
--- name: GetAllEventsForTenant :many
+-- name: GetAllEvents :many
 SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
-FROM events 
-WHERE tenant_id = $1;
+FROM events
+ORDER BY created_at DESC;
+
+-- name: GetAllEventsPaginated :many
+SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountAllEvents :one
+SELECT COUNT(*) FROM events;
 
 -- name: UpdateEvent :one
 UPDATE events

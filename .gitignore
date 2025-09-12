@@ -84,3 +84,6 @@ redis_data/
 
 # Example/learning files
 /examples/
+
+# recipes folder
+recipes_api/

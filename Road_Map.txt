@@ -2,8 +2,8 @@
 Goal: Prove value by recovering direct revenue.
 Leak Focus: Failed charges only.
 Integrations: Stripe, Slack, Linear
-Agent Behavior:
-Detect failed charges, suggest fix (retry, outreach), draft customer email + Linear task, human-in-the-loop approval (approve/deny/refine)
+Stripe integration type: Stripe Connect
+Agent Behavior: Detect failed charges, suggest fix (retry, outreach), draft customer email + Linear task, human-in-the-loop approval (approve/deny/refine)
 Output: Alerts + actionable drafts (not just insights).
 </v1 – Core MVP (0 → 1)>
 
@@ -13,6 +13,7 @@ Leak Focus: Coupon misuse, “Forever trials”, Quiet churn (downgrade + no log
 Integrations: Additional billing: Chargebee, Recurly
 Workflow: Jira, Trello
 Notifications: Email + MS Teams
+Stripe integration type: Add API key option if demanded
 Agent Behavior:
 Smarter triage → prioritization by $$ impact
 Refinement loop → user can ask agent to “improve outreach draft”

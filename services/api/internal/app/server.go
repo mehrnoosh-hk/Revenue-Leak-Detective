@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"rdl-api/handlers"
+	"rdl-api/internal/domain/services"
 	"rdl-api/internal/middleware"
 	"syscall"
 	"time"
@@ -20,7 +21,7 @@ type Server struct {
 	server *http.Server
 }
 
-func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *DomainServices, isDevelopment bool) error {
+func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *services.DomainServices, isDevelopment bool) error {
 
 	// Setup routes with services reference
 	s.SetupRoutes(logger, services, isDevelopment)
