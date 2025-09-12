@@ -1,3 +1,5 @@
+// Package app provides the struct and methods for the App
+// server.go handles the HTTP server and routes for configurations and methods for the App server
 package app
 
 import (
