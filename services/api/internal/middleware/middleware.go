@@ -32,8 +32,10 @@ func Logger(logger *slog.Logger) Middleware {
 
 			next.ServeHTTP(rw, r)
 
+			tenantID, hasTenantID := GetTenantID(r)
+
 			duration := time.Since(start)
-			logger.Info("HTTP request",
+			logFields := []any{
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
 				slog.String("remote_addr", r.RemoteAddr),
@@ -41,7 +43,13 @@ func Logger(logger *slog.Logger) Middleware {
 				slog.Int("status_code", rw.statusCode),
 				slog.Duration("duration", duration),
 				slog.String("request_id", GetRequestID(r)),
-			)
+			}
+
+			if hasTenantID {
+				logFields = append(logFields, slog.String("tenant_id", tenantID.String()))
+			}
+
+			logger.Info("HTTP request", logFields...)
 		})
 	}
 }
