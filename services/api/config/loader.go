@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -72,6 +73,9 @@ func LoadConfig(envFilePath string) (*Config, error) {
 		return nil, fmt.Errorf("%s: %w", ErrConfigValidationFailed, err)
 	}
 
+	slog.Info("Configuration loaded successfully")
+	printEffectiveConfig(config, slog.Default())
+	printBuildInfo(config, slog.Default())
 	return config, nil
 }
 
