@@ -88,23 +88,23 @@ api-security:
 ## api-run: Run the API service
 api-run:
 	@printf "$(GREEN) Running the API server...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && go run ./cmd/main.go
+	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go
 
 ## api-run-version: Run the API service with version flag
 api-run-version:
 	@printf "$(GREEN) Running the API server with version...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && go run ./cmd/main.go --version
+	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go --version
 
 ## api-run-help: Run the API service with help flag
 api-run-help:
 	@printf "$(GREEN) Running the API server with help...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && go run ./cmd/main.go --help
+	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go --help
 
 ## api-run-env: Run the API service with environment file (usage: make api-run-env ENV_FILE=.env.dev)
 api-run-env:
 	@test -n "$(ENV_FILE)" || (printf "$(RED)❌ ENV_FILE is required. Usage: make api-run-env ENV_FILE=.env.dev$(NC)\n" && exit 1)
 	@printf "$(GREEN) Running the API server with env file: $(ENV_FILE)...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && go run ./cmd/main.go --env-file=../../$(ENV_FILE)
+	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go --env-file=../../$(ENV_FILE)
 
 ## api-all: Run all API quality checks
 api-all: api-fmt api-fmt-check api-vet api-lint api-test api-test-coverage api-deps api-security

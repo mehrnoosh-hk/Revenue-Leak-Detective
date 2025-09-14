@@ -24,7 +24,7 @@ ENV_FILE := .env.dev
 API_SERVICE_PATH := ./services/api
 API_BINARY_NAME := rld-api
 API_BINARY_PATH := ./bin/$(API_BINARY_NAME)
-API_MAIN_PATH := $(API_SERVICE_PATH)/cmd/main.go
+API_MAIN_PATH := $(API_SERVICE_PATH)/cmd
 API_DOCKER_IMAGE := rld-api
 
 # Workers Service (Python) Configuration
