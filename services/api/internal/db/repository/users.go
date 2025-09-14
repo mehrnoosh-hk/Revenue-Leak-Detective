@@ -68,7 +68,7 @@ func (r *userRepository) DeleteUser(ctx context.Context, userID uuid.UUID, tenan
 
 	var rowsAffected int64
 	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
-		rows, err := queries.DeleteUser(ctx, db.ConvertUUIDToPgtypeUUID(userID))
+		rows, err := queries.DeleteUser(ctx, convertUUIDToPgtypeUUID(userID))
 		if err != nil {
 			r.logger.ErrorContext(ctx, ErrFailedToDeleteUser.Error(),
 				"user_id", userID,
@@ -168,7 +168,7 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID uuid.UUID, tena
 
 	var user models.User
 	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
-		dbUser, err := queries.GetUserByID(ctx, db.ConvertUUIDToPgtypeUUID(userID))
+		dbUser, err := queries.GetUserByID(ctx, convertUUIDToPgtypeUUID(userID))
 		if err != nil {
 			r.logger.ErrorContext(ctx, ErrFailedToGetUserByID.Error(),
 				"user_id", userID,
@@ -231,13 +231,13 @@ func (r *userRepository) UpdateUser(ctx context.Context, arg models.UpdateUserPa
 // toUserDomain converts a db.User (database model) to a models.User (domain model)
 func toUserDomain(u db.User) models.User {
 	return models.User{
-		ID:         db.ConvertPgtypeUUIDToUUID(u.ID),
+		ID:         convertPgtypeUUIDToUUID(u.ID),
 		Email:      u.Email,
 		Name:       u.Name,
 		ExternalID: u.ExternalID,
 		CreatedAt:  u.CreatedAt.Time,
 		UpdatedAt:  u.UpdatedAt.Time,
-		TenantID:   db.ConvertPgtypeUUIDToUUID(u.ID),
+		TenantID:   convertPgtypeUUIDToUUID(u.ID),
 	}
 }
 
@@ -253,7 +253,7 @@ func toCreateUserDBParams(arg models.CreateUserParams) db.CreateUserParams {
 // toUpdateUserDBParams converts domain UpdateUserParams to database UpdateUserParams
 func toUpdateUserDBParams(arg models.UpdateUserParams) db.UpdateUserParams {
 	return db.UpdateUserParams{
-		ID:         db.ConvertUUIDToPgtypeUUID(arg.ID),
+		ID:         convertUUIDToPgtypeUUID(arg.ID),
 		Email:      arg.Email,
 		Name:       arg.Name,
 		ExternalID: arg.ExternalID,

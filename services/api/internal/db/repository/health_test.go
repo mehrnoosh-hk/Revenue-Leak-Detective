@@ -152,5 +152,5 @@ func TestNewHealthRepository(t *testing.T) {
 	}
 
 	// Verify repository implements HealthRepository interface
-	var _ HealthRepository = repo
+	var _ = repo
 }

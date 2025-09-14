@@ -45,12 +45,12 @@ func New(cfg *config.Config) (*App, error) {
 		logger.Error("failed to create database connection pool", "error", err)
 		return nil, err
 	}
-	Services := setupDomainServices(pool, logger)
+	services := setupDomainServices(pool, logger)
 	return &App{
 		config:   cfg,
 		logger:   logger,
 		pool:     pool,
-		Services: Services,
+		Services: services,
 		server:   server,
 	}, nil
 }
@@ -63,7 +63,6 @@ func (a *App) StartUp(ctx context.Context) error {
 	a.logger.Info(fmt.Sprintf("Port: %s", a.config.GetPort()))
 
 	// Verify database connectivity with a short timeout
-	a.logger.Info("Verifying database connection at app Startup")
 	if err := a.Services.HealthService.CheckReadiness(ctx); err != nil {
 		return err
 	}
@@ -104,4 +103,12 @@ func (a *App) Shutdown(ctx context.Context) error {
 	a.logger.Info("Graceful shutdown completed successfully")
 
 	return nil
+}
+
+func (a *App) CheckReadiness(ctx context.Context) error {
+	return a.Services.HealthService.CheckReadiness(ctx)
+}
+
+func (a *App) CheckLiveness(ctx context.Context) error {
+	return a.Services.HealthService.CheckLiveness(ctx)
 }

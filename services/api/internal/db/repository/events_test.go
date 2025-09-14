@@ -53,14 +53,39 @@ func createTestUpdateEventParams() models.UpdateEventParams {
 	}
 }
 
-func createTestDBEvent() db.Event {
+func createTestDBEvent(t *testing.T) db.Event { //nolint: unused
 	now := time.Now()
-	data, _ := json.Marshal(map[string]interface{}{"amount": 100.50, "currency": "USD"})
+	data, err := json.Marshal(map[string]interface{}{"amount": 100.50, "currency": "USD"})
+	if err != nil {
+		t.Fatalf("json.Marshal failed in createTestDBEvent: %v", err)
+	}
 
 	return db.Event{
-		ID:         db.ConvertUUIDToPgtypeUUID(uuid.New()),
-		TenantID:   db.ConvertUUIDToPgtypeUUID(uuid.New()),
-		ProviderID: db.ConvertUUIDToPgtypeUUID(uuid.New()),
+		ID:         convertUUIDToPgtypeUUID(uuid.New()),
+		TenantID:   convertUUIDToPgtypeUUID(uuid.New()),
+		ProviderID: convertUUIDToPgtypeUUID(uuid.New()),
+		EventType:  db.EventTypeEnumPaymentFailed,
+		EventID:    "evt_test_123",
+		Status:     db.EventStatusEnumPending,
+		Data:       data,
+		CreatedAt:  pgtype.Timestamptz{Time: now, Valid: true},
+		UpdatedAt:  pgtype.Timestamptz{Time: now, Valid: true},
+	}
+}
+
+// createTestDBEventForBenchmark creates a test DB event for benchmarks
+// Uses panic for benchmarks since we can't use t.Fatal in benchmark context
+func createTestDBEventForBenchmark() db.Event {
+	now := time.Now()
+	data, err := json.Marshal(map[string]interface{}{"amount": 100.50, "currency": "USD"})
+	if err != nil {
+		panic("json.Marshal failed in createTestDBEventForBenchmark: " + err.Error())
+	}
+
+	return db.Event{
+		ID:         convertUUIDToPgtypeUUID(uuid.New()),
+		TenantID:   convertUUIDToPgtypeUUID(uuid.New()),
+		ProviderID: convertUUIDToPgtypeUUID(uuid.New()),
 		EventType:  db.EventTypeEnumPaymentFailed,
 		EventID:    "evt_test_123",
 		Status:     db.EventStatusEnumPending,
@@ -91,8 +116,8 @@ func TestNewEventsRepository(t *testing.T) {
 
 	// Test that the repository implements the EventsRepository interface
 	var repo EventsRepository = &eventsRepository{
-		pool:   nil, // We can't easily mock pgxpool.Pool without complex setup
-		logger: logger,
+		pool:   nil,    // We can't easily mock pgxpool.Pool without complex setup
+		logger: logger, // Required field for struct initialization
 	}
 
 	assert.NotNil(t, repo)
@@ -103,18 +128,21 @@ func TestNewEventsRepository(t *testing.T) {
 func TestToEventDomain(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    db.Event
+		input    func(t *testing.T) db.Event
 		expected models.Event
 	}{
 		{
 			name: "successful conversion",
-			input: func() db.Event {
+			input: func(t *testing.T) db.Event {
 				now := time.Now()
-				data, _ := json.Marshal(map[string]interface{}{"amount": 100.50, "currency": "USD"})
+				data, err := json.Marshal(map[string]interface{}{"amount": 100.50, "currency": "USD"})
+				if err != nil {
+					t.Fatalf("json.Marshal failed in TestToEventDomain successful conversion: %v", err)
+				}
 				return db.Event{
-					ID:         db.ConvertUUIDToPgtypeUUID(uuid.New()),
-					TenantID:   db.ConvertUUIDToPgtypeUUID(uuid.New()),
-					ProviderID: db.ConvertUUIDToPgtypeUUID(uuid.New()),
+					ID:         convertUUIDToPgtypeUUID(uuid.New()),
+					TenantID:   convertUUIDToPgtypeUUID(uuid.New()),
+					ProviderID: convertUUIDToPgtypeUUID(uuid.New()),
 					EventType:  db.EventTypeEnumPaymentFailed,
 					EventID:    "evt_test_123",
 					Status:     db.EventStatusEnumPending,
@@ -122,16 +150,19 @@ func TestToEventDomain(t *testing.T) {
 					CreatedAt:  pgtype.Timestamptz{Time: now, Valid: true},
 					UpdatedAt:  pgtype.Timestamptz{Time: now, Valid: true},
 				}
-			}(),
+			},
 		},
 		{
 			name: "conversion with nil timestamps",
-			input: func() db.Event {
-				data, _ := json.Marshal(map[string]interface{}{"amount": 100.50})
+			input: func(t *testing.T) db.Event {
+				data, err := json.Marshal(map[string]interface{}{"amount": 100.50})
+				if err != nil {
+					t.Fatalf("json.Marshal failed in TestToEventDomain nil timestamps: %v", err)
+				}
 				return db.Event{
-					ID:         db.ConvertUUIDToPgtypeUUID(uuid.New()),
-					TenantID:   db.ConvertUUIDToPgtypeUUID(uuid.New()),
-					ProviderID: db.ConvertUUIDToPgtypeUUID(uuid.New()),
+					ID:         convertUUIDToPgtypeUUID(uuid.New()),
+					TenantID:   convertUUIDToPgtypeUUID(uuid.New()),
+					ProviderID: convertUUIDToPgtypeUUID(uuid.New()),
 					EventType:  db.EventTypeEnumPaymentSucceeded,
 					EventID:    "evt_test_456",
 					Status:     db.EventStatusEnumProcessed,
@@ -139,29 +170,30 @@ func TestToEventDomain(t *testing.T) {
 					CreatedAt:  pgtype.Timestamptz{Valid: false},
 					UpdatedAt:  pgtype.Timestamptz{Valid: false},
 				}
-			}(),
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := toEventDomain(tt.input)
+			inputEvent := tt.input(t)
+			result := toEventDomain(inputEvent)
 
 			// We can't directly compare the structs because of the UUID fields
 			// So we compare individual fields
-			assert.Equal(t, tt.input.EventID, result.EventID)
-			assert.Equal(t, models.EventTypeEnum(tt.input.EventType), result.EventType)
-			assert.Equal(t, models.EventStatusEnum(tt.input.Status), result.Status)
+			assert.Equal(t, inputEvent.EventID, result.EventID)
+			assert.Equal(t, models.EventTypeEnum(inputEvent.EventType), result.EventType)
+			assert.Equal(t, models.EventStatusEnum(inputEvent.Status), result.Status)
 
 			// Compare timestamps
-			if tt.input.CreatedAt.Valid {
-				assert.Equal(t, tt.input.CreatedAt.Time, result.CreatedAt)
+			if inputEvent.CreatedAt.Valid {
+				assert.Equal(t, inputEvent.CreatedAt.Time, result.CreatedAt)
 			} else {
 				assert.Equal(t, time.Time{}, result.CreatedAt)
 			}
 
-			if tt.input.UpdatedAt.Valid {
-				assert.Equal(t, tt.input.UpdatedAt.Time, result.UpdatedAt)
+			if inputEvent.UpdatedAt.Valid {
+				assert.Equal(t, inputEvent.UpdatedAt.Time, result.UpdatedAt)
 			} else {
 				assert.Equal(t, time.Time{}, result.UpdatedAt)
 			}
@@ -223,8 +255,9 @@ func TestToCreateEventDBParams(t *testing.T) {
 				Data:       nil,
 			},
 			expectedError: errors.New("ConvertInterfaceToBytes: unsupported data type, expected string or []byte"),
-			validateResult: func(t *testing.T, result db.CreateEventParams) {
-				// This should not be called since we expect an error
+			validateResult: func(t *testing.T, _ db.CreateEventParams) {
+				// This should not be called since we expect an error, it should fail if it is called
+				t.Fail()
 			},
 		},
 	}
@@ -399,11 +432,12 @@ func TestEdgeCases(t *testing.T) {
 }
 
 // TestRepositoryInterfaceCompliance tests that the repository implements the interface correctly
-func TestRepositoryInterfaceCompliance(t *testing.T) {
+func TestRepositoryInterfaceCompliance(_ *testing.T) {
 	logger := createTestLogger()
 	repo := &eventsRepository{
-		pool:   nil, // We can't easily mock pgxpool.Pool without complex setup
-		logger: logger,
+		// We can't easily mock pgxpool.Pool without complex setup
+		pool:   nil,    // nolint:govet
+		logger: logger, // nolint:govet
 	}
 
 	// Test that the repository implements the EventsRepository interface
@@ -464,7 +498,7 @@ func TestDataValidation(t *testing.T) {
 func TestUUIDConversion(t *testing.T) {
 	t.Run("valid UUID conversion", func(t *testing.T) {
 		testUUID := uuid.New()
-		pgtypeUUID := db.ConvertUUIDToPgtypeUUID(testUUID)
+		pgtypeUUID := convertUUIDToPgtypeUUID(testUUID)
 
 		// Verify the conversion preserves the UUID
 		assert.True(t, pgtypeUUID.Valid)
@@ -473,7 +507,7 @@ func TestUUIDConversion(t *testing.T) {
 
 	t.Run("nil UUID handling", func(t *testing.T) {
 		var testUUID *uuid.UUID
-		pgtypeUUID := db.ConvertNullableUUIDToPgtypeUUID(testUUID)
+		pgtypeUUID := convertNullableUUIDToPgtypeUUID(testUUID)
 
 		// Verify nil UUID is handled correctly
 		assert.False(t, pgtypeUUID.Valid)
@@ -482,7 +516,7 @@ func TestUUIDConversion(t *testing.T) {
 
 // Benchmark tests for performance
 func BenchmarkToEventDomain(b *testing.B) {
-	dbEvent := createTestDBEvent()
+	dbEvent := createTestDBEventForBenchmark()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -495,7 +529,10 @@ func BenchmarkToCreateEventDBParams(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = toCreateEventDBParams(params)
+		_, err := toCreateEventDBParams(params)
+		if err != nil {
+			b.Fatalf("toCreateEventDBParams failed: %v", err)
+		}
 	}
 }
 
@@ -504,7 +541,10 @@ func BenchmarkToUpdateEventDBParams(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = toUpdateEventDBParams(params)
+		_, err := toUpdateEventDBParams(params)
+		if err != nil {
+			b.Fatalf("toUpdateEventDBParams failed: %v", err)
+		}
 	}
 }
 
@@ -712,9 +752,15 @@ func TestBatchOperations(t *testing.T) {
 		ctx := context.Background()
 		tenantID := uuid.New()
 
-		// These would fail at runtime due to nil pool, but we're testing interface compliance
-		_, _ = batchRepo.CreateEventsBatch(ctx, []models.CreateEventParams{}, tenantID)
-		_, _ = batchRepo.UpdateEventsBatch(ctx, []models.UpdateEventParams{}, tenantID)
+		// These methods handle empty slices gracefully, so we just check that the methods exist
+		// and can be called without panicking (interface compliance test)
+		_, err := batchRepo.CreateEventsBatch(ctx, []models.CreateEventParams{}, tenantID)
+		// Empty slice should return no error and empty result
+		assert.NoError(t, err, "CreateEventsBatch should handle empty slice gracefully")
+
+		_, err = batchRepo.UpdateEventsBatch(ctx, []models.UpdateEventParams{}, tenantID)
+		// Empty slice should return no error and empty result
+		assert.NoError(t, err, "UpdateEventsBatch should handle empty slice gracefully")
 	})
 
 	t.Run("Batch operation parameters", func(t *testing.T) {
