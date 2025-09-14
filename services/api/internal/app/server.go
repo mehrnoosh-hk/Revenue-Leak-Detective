@@ -10,18 +10,17 @@ import (
 	"os"
 	"os/signal"
 	"rdl-api/handlers"
-	"rdl-api/internal/domain/services"
 	"rdl-api/internal/middleware"
 	"syscall"
 	"time"
 )
 
-type Server struct {
+type AppServer struct {
 	mux    *http.ServeMux
 	server *http.Server
 }
 
-func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *services.DomainServices, isDevelopment bool) error {
+func (s *AppServer) Start(ctx context.Context, logger *slog.Logger, services Services, isDevelopment bool) error {
 
 	// Setup routes with services reference
 	s.SetupRoutes(logger, services, isDevelopment)
@@ -59,22 +58,32 @@ func (s *Server) Start(ctx context.Context, logger *slog.Logger, services *servi
 	return nil
 }
 
-func (s *Server) SetupRoutes(logger *slog.Logger, services *DomainServices, isDevelopment bool) {
+func (s *AppServer) SetupRoutes(logger *slog.Logger, services Services, isDevelopment bool) {
+	// Define paths that should be excluded from tenant context validation
+	// These are typically health check endpoints that don't require authentication
+	excludedPaths := []string{
+		"/healthz", // Kubernetes health check
+		"/health",  // Alternative health check
+		"/live",    // Liveness probe
+		"/ready",   // Readiness probe
+	}
+
 	// Apply middleware
 	handler := middleware.Chain(
 		s.mux,
-		middleware.RequestID(),
-		middleware.Logger(logger),
-		middleware.Recovery(logger),
-		middleware.CORS(),
-		middleware.TenantContext(logger, isDevelopment),
+		middleware.Recovery(logger), // 1. Outermost - catch all panics
+		middleware.CORS(),           // 2. Handle CORS early
+		middleware.RequestID(),      // 3. Generate request ID early
+		middleware.TenantContext(logger, isDevelopment, excludedPaths), // 4. Extract tenant context
+		middleware.Logger(logger),                                      // 5. Innermost - log everything
 	)
 
 	s.server.Handler = handler
 
 	// Register routes
-	s.mux.HandleFunc("/healthz", handlers.HealthCheckHandler(logger))
-	s.mux.HandleFunc("/health", handlers.HealthCheckHandler(logger)) // Alternative endpoint
-	s.mux.HandleFunc("/live", handlers.LiveHandler(services.healthService, logger))
-	s.mux.HandleFunc("/ready", handlers.ReadyHandler(services.healthService, logger))
+
+	s.mux.HandleFunc("/healthz", handlers.HealthCheckHandler(logger, services.HealthService))
+	s.mux.HandleFunc("/health", handlers.HealthCheckHandler(logger, services.HealthService)) // Alternative endpoint
+	s.mux.HandleFunc("/live", handlers.LiveHandler(logger, services.HealthService))
+	s.mux.HandleFunc("/ready", handlers.ReadyHandler(logger, services.HealthService))
 }
