@@ -87,7 +87,7 @@ func (r *eventsRepository) DeleteEvent(ctx context.Context, eventID uuid.UUID, t
 
 	var rowsAffected int64
 	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
-		rows, err := queries.DeleteEvent(ctx, db.ConvertUUIDToPgtypeUUID(eventID))
+		rows, err := queries.DeleteEvent(ctx, convertUUIDToPgtypeUUID(eventID))
 		if err != nil {
 			return r.handleDatabaseError(err, "delete event", eventID.String(), tenantID.String())
 		}
@@ -215,7 +215,7 @@ func (r *eventsRepository) GetEventByID(ctx context.Context, eventID uuid.UUID, 
 
 	var event models.Event
 	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
-		dbEvent, err := queries.GetEventByID(ctx, db.ConvertUUIDToPgtypeUUID(eventID))
+		dbEvent, err := queries.GetEventByID(ctx, convertUUIDToPgtypeUUID(eventID))
 		if err != nil {
 			// Check if it's a "no rows" error
 			if errors.Is(err, pgx.ErrNoRows) {
@@ -260,15 +260,15 @@ func (r *eventsRepository) UpdateEvent(ctx context.Context, arg models.UpdateEve
 
 	var domainEvent models.Event
 	err = WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
-		dbEvent, err := queries.UpdateEvent(ctx, params)
-		if err != nil {
+		dbEvent, dbErr := queries.UpdateEvent(ctx, params)
+		if dbErr != nil {
 			// Check if it's a "no rows" error
-			if errors.Is(err, pgx.ErrNoRows) {
+			if errors.Is(dbErr, pgx.ErrNoRows) {
 				r.logger.WarnContext(ctx, "Event not found for update", "event_id", arg.ID, "tenant_id", tenantID)
 				return WrapError("event update", ErrEventNotFound, arg.ID.String(), tenantID.String())
 			}
 
-			return r.handleDatabaseError(err, "update event", arg.ID.String(), tenantID.String())
+			return r.handleDatabaseError(dbErr, "update event", arg.ID.String(), tenantID.String())
 		}
 
 		domainEvent = toEventDomain(dbEvent)
@@ -449,7 +449,7 @@ func (r *eventsRepository) DeleteEventTx(ctx context.Context, tx pgx.Tx, eventID
 
 	// Create queries instance with transaction
 	queries := db.New(tx)
-	rows, err := queries.DeleteEvent(ctx, db.ConvertUUIDToPgtypeUUID(eventID))
+	rows, err := queries.DeleteEvent(ctx, convertUUIDToPgtypeUUID(eventID))
 	if err != nil {
 		return 0, r.handleDatabaseError(err, "delete event", eventID.String(), tenantID.String())
 	}
@@ -544,7 +544,7 @@ func (r *eventsRepository) GetEventByIDTx(ctx context.Context, tx pgx.Tx, eventI
 
 	// Create queries instance with transaction
 	queries := db.New(tx)
-	dbEvent, err := queries.GetEventByID(ctx, db.ConvertUUIDToPgtypeUUID(eventID))
+	dbEvent, err := queries.GetEventByID(ctx, convertUUIDToPgtypeUUID(eventID))
 	if err != nil {
 		// Check if it's a "no rows" error
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -687,13 +687,13 @@ func toEventDomain(e db.Event) models.Event {
 //   - db.CreateEventParams: The database model for event creation.
 //   - error: Any error encountered during conversion (e.g., data serialization).
 func toCreateEventDBParams(arg models.CreateEventParams) (db.CreateEventParams, error) {
-	data, err := db.ConvertInterfaceToBytes(arg.Data)
+	data, err := convertInterfaceToBytes(arg.Data)
 	if err != nil {
 		return db.CreateEventParams{}, err
 	}
 	return db.CreateEventParams{
-		TenantID:   db.ConvertUUIDToPgtypeUUID(arg.TenantID),
-		ProviderID: db.ConvertUUIDToPgtypeUUID(arg.ProviderID),
+		TenantID:   convertUUIDToPgtypeUUID(arg.TenantID),
+		ProviderID: convertUUIDToPgtypeUUID(arg.ProviderID),
 		EventType:  db.EventTypeEnum(arg.EventType),
 		EventID:    arg.EventID,
 		Status:     db.EventStatusEnum(arg.Status),
@@ -714,20 +714,20 @@ func toUpdateEventDBParams(arg models.UpdateEventParams) (db.UpdateEventParams, 
 	var err error
 
 	if arg.Data != nil {
-		data, err = db.ConvertInterfaceToBytes(arg.Data)
+		data, err = convertInterfaceToBytes(arg.Data)
 		if err != nil {
 			return db.UpdateEventParams{}, err
 		}
 	}
 
-	resultEventType := db.ConvertEnumsToNullableEnum[*db.EventTypeEnum, db.NullEventTypeEnum]((*db.EventTypeEnum)(arg.EventType))
+	resultEventType := convertEnumsToNullableEnum[*db.EventTypeEnum, db.NullEventTypeEnum]((*db.EventTypeEnum)(arg.EventType))
 
-	resultEventStatus := db.ConvertEnumsToNullableEnum[*db.EventStatusEnum, db.NullEventStatusEnum]((*db.EventStatusEnum)(arg.Status))
+	resultEventStatus := convertEnumsToNullableEnum[*db.EventStatusEnum, db.NullEventStatusEnum]((*db.EventStatusEnum)(arg.Status))
 
 	return db.UpdateEventParams{
-		ID:         db.ConvertUUIDToPgtypeUUID(arg.ID),
-		TenantID:   db.ConvertNullableUUIDToPgtypeUUID(arg.TenantID),
-		ProviderID: db.ConvertNullableUUIDToPgtypeUUID(arg.ProviderID),
+		ID:         convertUUIDToPgtypeUUID(arg.ID),
+		TenantID:   convertNullableUUIDToPgtypeUUID(arg.TenantID),
+		ProviderID: convertNullableUUIDToPgtypeUUID(arg.ProviderID),
 		EventType:  resultEventType,
 		EventID:    arg.EventID,
 		Status:     resultEventStatus,
