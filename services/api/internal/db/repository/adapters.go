@@ -19,16 +19,18 @@
 //   - Comprehensive UUID conversion utilities
 //   - Safe interface{} to []byte conversion
 //   - Extensive documentation and usage examples
-package db
+package repository
 
 import (
 	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+
+	db "rdl-api/internal/db/sqlc"
 )
 
-// ConvertUUIDToPgtypeUUID converts a uuid.UUID to a pgtype.UUID,
+// convertUUIDToPgtypeUUID converts a uuid.UUID to a pgtype.UUID,
 // which is the type expected by pgx and SQLC for UUID columns.
 //
 // Parameters:
@@ -36,11 +38,11 @@ import (
 //
 // Returns:
 //   - pgtype.UUID: The corresponding pgtype.UUID with Valid set to true.
-func ConvertUUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
+func convertUUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: id, Valid: true}
 }
 
-// ConvertNullableUUIDToPgtypeUUID converts a pointer to uuid.UUID to a pgtype.UUID.
+// convertNullableUUIDToPgtypeUUID converts a pointer to uuid.UUID to a pgtype.UUID.
 // If the input is nil, returns a pgtype.UUID with Valid set to false.
 //
 // Parameters:
@@ -48,14 +50,14 @@ func ConvertUUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
 //
 // Returns:
 //   - pgtype.UUID: The corresponding pgtype.UUID, with Valid set appropriately.
-func ConvertNullableUUIDToPgtypeUUID(id *uuid.UUID) pgtype.UUID {
+func convertNullableUUIDToPgtypeUUID(id *uuid.UUID) pgtype.UUID {
 	if id == nil {
 		return pgtype.UUID{Valid: false}
 	}
 	return pgtype.UUID{Bytes: *id, Valid: true}
 }
 
-// ConvertPgtypeUUIDToUUID converts a pgtype.UUID to a uuid.UUID.
+// convertPgtypeUUIDToUUID converts a pgtype.UUID to a uuid.UUID.
 // If the pgtype.UUID is not valid, returns uuid.Nil.
 //
 // Parameters:
@@ -63,14 +65,14 @@ func ConvertNullableUUIDToPgtypeUUID(id *uuid.UUID) pgtype.UUID {
 //
 // Returns:
 //   - uuid.UUID: The corresponding uuid.UUID, or uuid.Nil if invalid.
-func ConvertPgtypeUUIDToUUID(pgUUID pgtype.UUID) uuid.UUID {
+func convertPgtypeUUIDToUUID(pgUUID pgtype.UUID) uuid.UUID {
 	if !pgUUID.Valid {
 		return uuid.Nil
 	}
 	return pgUUID.Bytes
 }
 
-// ConvertInterfaceToBytes safely converts an input of type any (interface{})
+// convertInterfaceToBytes safely converts an input of type any (interface{})
 // to a byte slice ([]byte). This is useful for serializing data fields
 // that may be stored as JSON or binary in the database.
 //
@@ -86,7 +88,7 @@ func ConvertPgtypeUUIDToUUID(pgUUID pgtype.UUID) uuid.UUID {
 // Returns:
 //   - []byte: The resulting byte slice.
 //   - error: An error if the conversion is not possible.
-func ConvertInterfaceToBytes(data any) ([]byte, error) {
+func convertInterfaceToBytes(data any) ([]byte, error) {
 	switch v := data.(type) {
 	case string:
 		return []byte(v), nil
@@ -101,14 +103,14 @@ func ConvertInterfaceToBytes(data any) ([]byte, error) {
 // It is used to enable type-safe handling of all supported enum pointer types for conversion
 // to their corresponding nullable equivalents in the ConvertEnumsToNullableEnum function.
 type convertableEnums interface {
-	*EventTypeEnum |
-		*EventStatusEnum |
-		*ActionTypeEnum |
-		*ActionStatusEnum |
-		*ActionResultEnum |
-		*LeakTypeEnum |
-		*PaymentTypeEnum |
-		*PaymentStatusEnum
+	*db.EventTypeEnum |
+		*db.EventStatusEnum |
+		*db.ActionTypeEnum |
+		*db.ActionStatusEnum |
+		*db.ActionResultEnum |
+		*db.LeakTypeEnum |
+		*db.PaymentTypeEnum |
+		*db.PaymentStatusEnum
 }
 
 // convertedEnums is a type constraint that matches any of the nullable enum types
@@ -126,17 +128,17 @@ type convertableEnums interface {
 //   - NullPaymentTypeEnum
 //   - NullPaymentStatusEnum
 type convertedEnums interface {
-	NullEventTypeEnum |
-		NullEventStatusEnum |
-		NullActionTypeEnum |
-		NullActionStatusEnum |
-		NullActionResultEnum |
-		NullLeakTypeEnum |
-		NullPaymentTypeEnum |
-		NullPaymentStatusEnum
+	db.NullEventTypeEnum |
+		db.NullEventStatusEnum |
+		db.NullActionTypeEnum |
+		db.NullActionStatusEnum |
+		db.NullActionResultEnum |
+		db.NullLeakTypeEnum |
+		db.NullPaymentTypeEnum |
+		db.NullPaymentStatusEnum
 }
 
-// ConvertEnumsToNullableEnum converts a pointer to an enum type to its corresponding
+// convertEnumsToNullableEnum converts a pointer to an enum type to its corresponding
 // nullable enum type as defined in the db package. This function supports all
 // nullable enum types used in the database layer.
 //
@@ -156,76 +158,76 @@ type convertedEnums interface {
 //
 // Usage example:
 //
-//	result, err := ConvertEnumsToNullableEnum[*EventTypeEnum, NullEventTypeEnum](eventTypePtr)
+//	result, err := convertEnumsToNullableEnum[*EventTypeEnum, NullEventTypeEnum](eventTypePtr)
 //	if err != nil {
 //		// handle error
 //	}
 //	nullEventType := result
-func ConvertEnumsToNullableEnum[T convertableEnums, R convertedEnums](enumPtr T) R {
+func convertEnumsToNullableEnum[T convertableEnums, R convertedEnums](enumPtr T) R {
 	switch v := any(enumPtr).(type) {
-	case *EventTypeEnum:
+	case *db.EventTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullEventTypeEnum{Valid: false}).(R)
+			return any(db.NullEventTypeEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullEventTypeEnum{EventTypeEnum: *v, Valid: true}).(R)
-	case *EventStatusEnum:
+		return any(db.NullEventTypeEnum{EventTypeEnum: *v, Valid: true}).(R)
+	case *db.EventStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullEventStatusEnum{Valid: false}).(R)
+			return any(db.NullEventStatusEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullEventStatusEnum{EventStatusEnum: *v, Valid: true}).(R)
-	case *ActionTypeEnum:
+		return any(db.NullEventStatusEnum{EventStatusEnum: *v, Valid: true}).(R)
+	case *db.ActionTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullActionTypeEnum{Valid: false}).(R)
+			return any(db.NullActionTypeEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullActionTypeEnum{ActionTypeEnum: *v, Valid: true}).(R)
-	case *ActionStatusEnum:
+		return any(db.NullActionTypeEnum{ActionTypeEnum: *v, Valid: true}).(R)
+	case *db.ActionStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullActionStatusEnum{Valid: false}).(R)
+			return any(db.NullActionStatusEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullActionStatusEnum{ActionStatusEnum: *v, Valid: true}).(R)
-	case *ActionResultEnum:
+		return any(db.NullActionStatusEnum{ActionStatusEnum: *v, Valid: true}).(R)
+	case *db.ActionResultEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullActionResultEnum{Valid: false}).(R)
+			return any(db.NullActionResultEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullActionResultEnum{ActionResultEnum: *v, Valid: true}).(R)
-	case *LeakTypeEnum:
+		return any(db.NullActionResultEnum{ActionResultEnum: *v, Valid: true}).(R)
+	case *db.LeakTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullLeakTypeEnum{Valid: false}).(R)
+			return any(db.NullLeakTypeEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullLeakTypeEnum{LeakTypeEnum: *v, Valid: true}).(R)
-	case *PaymentTypeEnum:
+		return any(db.NullLeakTypeEnum{LeakTypeEnum: *v, Valid: true}).(R)
+	case *db.PaymentTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullPaymentTypeEnum{Valid: false}).(R)
+			return any(db.NullPaymentTypeEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullPaymentTypeEnum{PaymentTypeEnum: *v, Valid: true}).(R)
-	case *PaymentStatusEnum:
+		return any(db.NullPaymentTypeEnum{PaymentTypeEnum: *v, Valid: true}).(R)
+	case *db.PaymentStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(NullPaymentStatusEnum{Valid: false}).(R)
+			return any(db.NullPaymentStatusEnum{Valid: false}).(R)
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(NullPaymentStatusEnum{PaymentStatusEnum: *v, Valid: true}).(R)
+		return any(db.NullPaymentStatusEnum{PaymentStatusEnum: *v, Valid: true}).(R)
 	default:
 		var zero R
 		return zero
 	}
 }
 
-// ConvertNullablePgtypeUUIDToUUID converts a pgtype.UUID to a pointer to uuid.UUID.
+// convertNullablePgtypeUUIDToUUID converts a pgtype.UUID to a pointer to uuid.UUID.
 // If the pgtype.UUID is not valid, returns nil.
 //
 // Parameters:
@@ -233,7 +235,7 @@ func ConvertEnumsToNullableEnum[T convertableEnums, R convertedEnums](enumPtr T)
 //
 // Returns:
 //   - *uuid.UUID: Pointer to the corresponding uuid.UUID, or nil if invalid.
-func ConvertNullablePgtypeUUIDToUUID(pgUUID pgtype.UUID) *uuid.UUID {
+func convertNullablePgtypeUUIDToUUID(pgUUID pgtype.UUID) *uuid.UUID { //nolint: unused
 	if !pgUUID.Valid {
 		return nil
 	}
@@ -242,7 +244,7 @@ func ConvertNullablePgtypeUUIDToUUID(pgUUID pgtype.UUID) *uuid.UUID {
 	return &uuidValue
 }
 
-// ConvertEnumToNullableEnum converts a non-nullable enum to its nullable equivalent.
+// convertEnumToNullableEnum converts a non-nullable enum to its nullable equivalent.
 // This is useful for converting between domain models and database models.
 //
 // Supported enum types and their conversions:
@@ -261,24 +263,24 @@ func ConvertNullablePgtypeUUIDToUUID(pgUUID pgtype.UUID) *uuid.UUID {
 // Returns:
 //   - any: The corresponding nullable enum type.
 //   - error: An error if the input type is not supported.
-func ConvertEnumToNullableEnum(enumValue any) (any, error) {
+func convertEnumToNullableEnum(enumValue any) (any, error) { //nolint: unused
 	switch v := enumValue.(type) {
-	case EventTypeEnum:
-		return NullEventTypeEnum{EventTypeEnum: v, Valid: true}, nil
-	case EventStatusEnum:
-		return NullEventStatusEnum{EventStatusEnum: v, Valid: true}, nil
-	case ActionTypeEnum:
-		return NullActionTypeEnum{ActionTypeEnum: v, Valid: true}, nil
-	case ActionStatusEnum:
-		return NullActionStatusEnum{ActionStatusEnum: v, Valid: true}, nil
-	case ActionResultEnum:
-		return NullActionResultEnum{ActionResultEnum: v, Valid: true}, nil
-	case LeakTypeEnum:
-		return NullLeakTypeEnum{LeakTypeEnum: v, Valid: true}, nil
-	case PaymentTypeEnum:
-		return NullPaymentTypeEnum{PaymentTypeEnum: v, Valid: true}, nil
-	case PaymentStatusEnum:
-		return NullPaymentStatusEnum{PaymentStatusEnum: v, Valid: true}, nil
+	case db.EventTypeEnum:
+		return db.NullEventTypeEnum{EventTypeEnum: v, Valid: true}, nil
+	case db.EventStatusEnum:
+		return db.NullEventStatusEnum{EventStatusEnum: v, Valid: true}, nil
+	case db.ActionTypeEnum:
+		return db.NullActionTypeEnum{ActionTypeEnum: v, Valid: true}, nil
+	case db.ActionStatusEnum:
+		return db.NullActionStatusEnum{ActionStatusEnum: v, Valid: true}, nil
+	case db.ActionResultEnum:
+		return db.NullActionResultEnum{ActionResultEnum: v, Valid: true}, nil
+	case db.LeakTypeEnum:
+		return db.NullLeakTypeEnum{LeakTypeEnum: v, Valid: true}, nil
+	case db.PaymentTypeEnum:
+		return db.NullPaymentTypeEnum{PaymentTypeEnum: v, Valid: true}, nil
+	case db.PaymentStatusEnum:
+		return db.NullPaymentStatusEnum{PaymentStatusEnum: v, Valid: true}, nil
 	default:
 		return nil, errors.New("ConvertEnumToNullableEnum: unsupported enum type")
 	}
