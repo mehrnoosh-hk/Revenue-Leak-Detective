@@ -99,6 +99,7 @@ migrate-create:
 
 ## sqlc-generate: Generate SQLC code from SQL queries
 sqlc-generate:
+	@sqlc version | grep -q "1.30.0" || (printf "$(RED)❌ SQLC version is not 1.30.0. Please update SQLC to 1.30.0.$(NC)\n" && exit 1)
 	@printf "$(BLUE)📝 Generating SQLC code...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && sqlc generate
 	@printf "$(GREEN)✓ SQLC code generated$(NC)\n"
