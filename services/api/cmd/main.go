@@ -49,7 +49,7 @@ func main() {
 	ctx := context.Background()
 
 	if *healthFlag {
-		err := application.Services.HealthService.CheckReadiness(ctx)
+		err := application.CheckReadiness(ctx)
 		if err != nil {
 			slog.Error("Health check failed", "error", err)
 			os.Exit(1)
