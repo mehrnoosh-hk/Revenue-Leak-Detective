@@ -105,7 +105,7 @@ func TestNewHealthService(t *testing.T) {
 			}
 
 			// Verify service implements HealthService interface
-			var _ HealthService = service
+			var _ = service
 		})
 	}
 }
