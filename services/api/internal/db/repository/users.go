@@ -19,10 +19,10 @@ type userRepository struct {
 	logger *slog.Logger
 }
 
-func NewUserRepository(pool *pgxpool.Pool) UserRepository {
+func NewUserRepository(pool *pgxpool.Pool, l *slog.Logger) UserRepository {
 	return &userRepository{
 		db:     pool,
-		logger: slog.Default(),
+		logger: l,
 	}
 }
 
