@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"rdl-api/internal/domain/services"
 	"time"
-
-	"rdl-api/internal/domain/health"
 )
 
 type probeResponse struct {
@@ -16,10 +15,10 @@ type probeResponse struct {
 
 // LiveHandler returns a simple liveness check handler.
 // It should be fast and avoid any external dependencies.
-func LiveHandler(healthService health.HealthService, logger *slog.Logger) http.HandlerFunc {
+func LiveHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -28,7 +27,7 @@ func LiveHandler(healthService health.HealthService, logger *slog.Logger) http.H
 			if logger != nil {
 				logger.Error("liveness check failed", slog.Any("error", err))
 			}
-			http.Error(w, "Not Alive", http.StatusInternalServerError)
+			http.Error(w, ErrNotAlive.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -38,7 +37,7 @@ func LiveHandler(healthService health.HealthService, logger *slog.Logger) http.H
 			if logger != nil {
 				logger.Error("failed to encode response", slog.Any("error", err))
 			}
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -46,7 +45,7 @@ func LiveHandler(healthService health.HealthService, logger *slog.Logger) http.H
 
 // ReadyHandler checks readiness by using the health service.
 // If the service is unavailable, it returns 503 to indicate not ready.
-func ReadyHandler(healthService health.HealthService, logger *slog.Logger) http.HandlerFunc {
+func ReadyHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -55,9 +54,9 @@ func ReadyHandler(healthService health.HealthService, logger *slog.Logger) http.
 
 		if err := healthService.CheckReadiness(r.Context()); err != nil {
 			if logger != nil {
-				logger.Error("readiness check failed", slog.Any("error", err))
+				logger.ErrorContext(r.Context(), "readiness check failed", "error", err)
 			}
-			http.Error(w, "Not Ready", http.StatusServiceUnavailable)
+			http.Error(w, ErrNotReady.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
@@ -65,9 +64,9 @@ func ReadyHandler(healthService health.HealthService, logger *slog.Logger) http.
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			if logger != nil {
-				logger.Error("failed to encode response", slog.Any("error", err))
+				logger.ErrorContext(r.Context(), "failed to encode response", "error", err)
 			}
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
