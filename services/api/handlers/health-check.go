@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"rdl-api/internal/domain/services"
 	"time"
 )
 
@@ -15,11 +16,11 @@ type HealthResponse struct {
 }
 
 // HealthCheckHandler returns a health check handler
-func HealthCheckHandler(logger *slog.Logger) http.HandlerFunc {
+func HealthCheckHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Only allow GET requests
 		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -27,22 +28,26 @@ func HealthCheckHandler(logger *slog.Logger) http.HandlerFunc {
 			logger = slog.Default()
 		}
 
-		logger.Debug("Health check endpoint accessed",
-			slog.String("remote_addr", r.RemoteAddr))
+		if err := healthService.CheckReadiness(r.Context()); err != nil {
+			logger.ErrorContext(r.Context(), "Health check failed", "error", err)
+			http.Error(w, ErrHealthCheckFailed.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		logger.DebugContext(r.Context(), "Health check endpoint accessed", "remote_addr", r.RemoteAddr)
 
 		response := HealthResponse{
 			Status:    "OK",
 			Timestamp: time.Now().UTC(),
-			Version:   "1.0.0", // Could be loaded from build info
+			Version:   "1.0.0", // TODO: Should be loaded from build info
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
 		if err := json.NewEncoder(w).Encode(response); err != nil {
-			logger.Error("Failed to encode health response",
-				slog.Any("error", err))
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			logger.ErrorContext(r.Context(), "Failed to encode health response", "error", err)
+			http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
