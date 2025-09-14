@@ -14,13 +14,14 @@ import (
 
 type eventsService struct {
 	eventsRepository repository.EventsRepository
+	logger           *slog.Logger
 }
 
 // - Pointer to an initialized EventService.
 func NewEventService(pool *pgxpool.Pool, l *slog.Logger) EventsService {
 	// It needs to initialze an EventsRepository with the dependencies injected from the app
 	eR := repository.NewEventsRepository(pool, l)
-	return &eventsService{eventsRepository: eR}
+	return &eventsService{eventsRepository: eR, logger: l}
 }
 
 // CreateEvent creates a new event in the system.

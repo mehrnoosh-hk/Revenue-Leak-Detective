@@ -4,6 +4,7 @@ package services
 
 import (
 	"context"
+	"log/slog"
 	"rdl-api/internal/db/repository"
 	"rdl-api/internal/domain/models"
 
@@ -16,9 +17,9 @@ type userService struct {
 	userRepository repository.UserRepository
 }
 
-func NewUserService(db *pgxpool.Pool) UserService {
+func NewUserService(db *pgxpool.Pool, l *slog.Logger) UsersService {
 	return &userService{
-		userRepository: repository.NewUserRepository(db),
+		userRepository: repository.NewUserRepository(db, l),
 	}
 }
 

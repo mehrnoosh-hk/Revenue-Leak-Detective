@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type DomainServices interface {
-	UsersService
-	EventsService
+type HealthService interface {
+	CheckReadiness(ctx context.Context) error
+	CheckLiveness(ctx context.Context) error
 }
 
 type UsersService interface {
