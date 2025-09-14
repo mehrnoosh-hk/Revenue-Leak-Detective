@@ -24,8 +24,7 @@ const (
 
 // Test error definitions
 var (
-	testServiceError = errors.New("service unavailable")
-	testTimeoutError = errors.New("service timeout")
+	errTestService = errors.New("service unavailable")
 )
 
 // testCase represents a single test case for health check handler
@@ -80,7 +79,7 @@ func newHealthyService() *testHealthService {
 
 func newUnhealthyService(err error) *testHealthService {
 	if err == nil {
-		err = testServiceError
+		err = errTestService
 	}
 	return &testHealthService{
 		CheckReadinessFn: func(ctx context.Context) error {
@@ -114,8 +113,8 @@ func newTimeoutService(delay time.Duration) *testHealthService {
 }
 
 // Test helpers
-func createTestRequest(method, url string) *http.Request {
-	req, err := http.NewRequest(method, url, nil)
+func createTestRequest(method string) *http.Request {
+	req, err := http.NewRequest(method, testEndpoint, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create test request: %v", err))
 	}
@@ -186,7 +185,7 @@ func runHealthCheckTest(t *testing.T, tc testCase) {
 		defer cancel()
 		req = createTestRequestWithContext(tc.method, testEndpoint, ctx)
 	} else {
-		req = createTestRequest(tc.method, testEndpoint)
+		req = createTestRequest(tc.method)
 	}
 
 	// Create response recorder
@@ -236,7 +235,7 @@ func generateGETTests() []testCase {
 		{
 			name:           "GET_unhealthy_service",
 			method:         http.MethodGet,
-			healthService:  newUnhealthyService(testServiceError),
+			healthService:  newUnhealthyService(errTestService),
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   ErrHealthCheckFailed.Error(),
 			expectJSON:     false,
@@ -261,7 +260,7 @@ func generateMethodNotAllowedTests() []testCase {
 		service *testHealthService
 	}{
 		{"healthy", newHealthyService()},
-		{"unhealthy", newUnhealthyService(testServiceError)},
+		{"unhealthy", newUnhealthyService(errTestService)},
 		{"nil", nil},
 	}
 
@@ -353,7 +352,7 @@ func TestHealthCheckHandler(t *testing.T) {
 // TestHealthCheckHandler_EdgeCases tests edge cases and error conditions
 func TestHealthCheckHandler_EdgeCases(t *testing.T) {
 	t.Run("nil_logger_uses_default", func(t *testing.T) {
-		req := createTestRequest(http.MethodGet, testEndpoint)
+		req := createTestRequest(http.MethodGet)
 		rr := httptest.NewRecorder()
 		handler := HealthCheckHandler(nil, newHealthyService())
 		handler.ServeHTTP(rr, req)
@@ -386,7 +385,7 @@ func TestHealthCheckHandler_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("json_encoding_validation", func(t *testing.T) {
-		req := createTestRequest(http.MethodGet, testEndpoint)
+		req := createTestRequest(http.MethodGet)
 		rr := httptest.NewRecorder()
 		handler := HealthCheckHandler(newTestLogger(), newHealthyService())
 		handler.ServeHTTP(rr, req)
@@ -417,7 +416,7 @@ func TestHealthCheckHandler_ConcurrentAccess(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < numRequests; j++ {
-				req := createTestRequest(http.MethodGet, testEndpoint)
+				req := createTestRequest(http.MethodGet)
 				rr := httptest.NewRecorder()
 				handler.ServeHTTP(rr, req)
 				results <- rr.Code
@@ -442,7 +441,7 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 
 	// Create handlers with different service states
 	healthyHandler := HealthCheckHandler(newTestLogger(), newHealthyService())
-	unhealthyHandler := HealthCheckHandler(newTestLogger(), newUnhealthyService(testServiceError))
+	unhealthyHandler := HealthCheckHandler(newTestLogger(), newUnhealthyService(errTestService))
 
 	var wg sync.WaitGroup
 	healthyResults := make(chan int, numGoroutines)
@@ -453,7 +452,7 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			req := createTestRequest(http.MethodGet, testEndpoint)
+			req := createTestRequest(http.MethodGet)
 			rr := httptest.NewRecorder()
 			healthyHandler.ServeHTTP(rr, req)
 			healthyResults <- rr.Code
@@ -465,7 +464,7 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			req := createTestRequest(http.MethodGet, testEndpoint)
+			req := createTestRequest(http.MethodGet)
 			rr := httptest.NewRecorder()
 			unhealthyHandler.ServeHTTP(rr, req)
 			unhealthyResults <- rr.Code
@@ -494,7 +493,7 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 // BenchmarkHealthCheckHandler benchmarks the health check handler performance
 func BenchmarkHealthCheckHandler(b *testing.B) {
 	handler := HealthCheckHandler(newTestLogger(), newHealthyService())
-	req := createTestRequest(http.MethodGet, testEndpoint)
+	req := createTestRequest(http.MethodGet)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -508,8 +507,8 @@ func BenchmarkHealthCheckHandler(b *testing.B) {
 
 // BenchmarkHealthCheckHandler_Unhealthy benchmarks the health check handler with unhealthy service
 func BenchmarkHealthCheckHandler_Unhealthy(b *testing.B) {
-	handler := HealthCheckHandler(newTestLogger(), newUnhealthyService(testServiceError))
-	req := createTestRequest(http.MethodGet, testEndpoint)
+	handler := HealthCheckHandler(newTestLogger(), newUnhealthyService(errTestService))
+	req := createTestRequest(http.MethodGet)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -527,7 +526,7 @@ func BenchmarkHealthCheckHandler_Concurrent(b *testing.B) {
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
-		req := createTestRequest(http.MethodGet, testEndpoint)
+		req := createTestRequest(http.MethodGet)
 		for pb.Next() {
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
