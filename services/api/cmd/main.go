@@ -8,9 +8,6 @@ import (
 	"os"
 	"rdl-api/config"
 	"rdl-api/internal/app"
-	"time"
-
-	"github.com/lmittmann/tint"
 )
 
 func main() {
@@ -36,27 +33,33 @@ func main() {
 		handleVersionFlag(cfg)
 	}
 
-	// Setup logger
-	logger := setupLogger(cfg)
-
 	// Log startup information
-	logger.Info("Starting Revenue Leak Detective API")
+	slog.Info("Starting Revenue Leak Detective API")
 
-	cfg.PrintBuildInfo(logger)
-	cfg.PrintEffectiveConfig(logger)
+	// Move to app package
+	// cfg.PrintBuildInfo(logger)
+	// cfg.PrintEffectiveConfig(logger)
 
-	application := app.New(cfg, logger)
+	application, err := app.New(cfg)
+	if err != nil {
+		slog.Error("Failed to create application", "error", err)
+		os.Exit(1)
+	}
 
-	// TODO: Handle health check flag (for Docker health checks)
+	ctx := context.Background()
+
 	if *healthFlag {
-		// TODO:Perform health check logic here
+		err := application.Services.HealthService.CheckReadiness(ctx)
+		if err != nil {
+			slog.Error("Health check failed", "error", err)
+			os.Exit(1)
+		}
 		fmt.Println("Health check: OK")
 		os.Exit(0)
 	}
 
-	ctx := context.Background()
 	if err := application.StartUp(ctx); err != nil {
-		logger.Error("Server failed to start", "error", err)
+		slog.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
 }
@@ -67,22 +70,4 @@ func handleVersionFlag(cfg *config.Config) {
 	fmt.Printf("Commit: %s", cfg.BuildInfo.GIT_COMMIT_FULL)
 	fmt.Printf("Built: %s", cfg.BuildInfo.BUILD_TIMESTAMP)
 	os.Exit(0)
-}
-
-func setupLogger(cfg *config.Config) *slog.Logger {
-	var logger *slog.Logger
-	if cfg.IsDevelopment() {
-		logger = slog.New(tint.NewHandler(os.Stdout, &tint.Options{
-			Level:      cfg.GetLogLevel(),
-			TimeFormat: time.RFC3339,
-			AddSource:  true,
-			NoColor:    false,
-		}))
-	} else {
-		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     cfg.GetLogLevel(),
-			AddSource: true,
-		}))
-	}
-	return logger
 }
