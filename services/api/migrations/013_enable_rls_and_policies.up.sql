@@ -76,7 +76,13 @@ CREATE POLICY tenant_isolation_actions ON actions
     );
 
 -- Create service account role
-CREATE ROLE service_account;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'service_account') THEN
+        CREATE ROLE service_account;
+    END IF;
+END
+$$;
 GRANT USAGE ON SCHEMA public TO service_account;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_account;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_account;
