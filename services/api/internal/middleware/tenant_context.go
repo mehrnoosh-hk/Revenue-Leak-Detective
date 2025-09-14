@@ -28,10 +28,19 @@ func GetTenantID(r *http.Request) (uuid.UUID, bool) {
 }
 
 // TenantContext extracts the tenant ID from JWT token (or header in development)
-// and stores it in the request context.
-func TenantContext(l *slog.Logger, isDevelopment bool) Middleware {
+// and stores it in the request context. It skips tenant validation for excluded paths.
+//
+// excludedPaths: List of paths that should skip tenant validation (e.g., health endpoints)
+// Example: []string{"/healthz", "/health", "/live", "/ready"}
+func TenantContext(l *slog.Logger, isDevelopment bool, excludedPaths []string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip tenant validation for excluded paths
+			if isPathExcluded(r.URL.Path, excludedPaths) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Extract tenant ID from Authorization header (JWT token)
 			// or from X-Tenant-ID header for development/testing
 			tenantID := extractTenantID(l, r, isDevelopment)
@@ -66,6 +75,7 @@ func extractTenantID(l *slog.Logger, r *http.Request, isDevelopment bool) uuid.U
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if tenantID, err := extractTenantFromJWT(token); err == nil {
+			l.Info("Tenant ID extracted from JWT token", "tenantID", tenantID)
 			return tenantID
 		}
 	}
@@ -84,4 +94,20 @@ func extractTenantFromJWT(token string) (uuid.UUID, error) {
 
 	// For now, return a placeholder
 	return uuid.Nil, fmt.Errorf("JWT parsing not implemented, %s", token)
+}
+
+// isPathExcluded checks if the given path matches any of the excluded paths.
+// It supports exact path matching and prefix matching for health endpoints.
+func isPathExcluded(path string, excludedPaths []string) bool {
+	for _, excludedPath := range excludedPaths {
+		// Exact match
+		if path == excludedPath {
+			return true
+		}
+		// Prefix match for health-related endpoints (e.g., /healthz, /health, /live, /ready)
+		if strings.HasPrefix(path, excludedPath) {
+			return true
+		}
+	}
+	return false
 }
