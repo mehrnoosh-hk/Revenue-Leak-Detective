@@ -23,5 +23,7 @@ sql:
           go_type:
             import: "github.com/jackc/pgx/v5/pgtype"
             type: "UUID"
-        - db_type: "CITEXT"
+        - db_type: "citext"
           go_type: "string"
+        - db_type: "jsonb"
+          go_type: "json.RawMessage"

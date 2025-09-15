@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -390,7 +391,7 @@ type Event struct {
 	EventType  EventTypeEnum      `json:"event_type"`
 	EventID    string             `json:"event_id"`
 	Status     EventStatusEnum    `json:"status"`
-	Data       []byte             `json:"data"`
+	Data       json.RawMessage    `json:"data"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }

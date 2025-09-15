@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -34,7 +35,7 @@ type CreateEventParams struct {
 	EventType  EventTypeEnum   `json:"event_type"`
 	EventID    string          `json:"event_id"`
 	Status     EventStatusEnum `json:"status"`
-	Data       []byte          `json:"data"`
+	Data       json.RawMessage `json:"data"`
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
