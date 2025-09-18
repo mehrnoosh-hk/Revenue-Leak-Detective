@@ -31,35 +31,30 @@ func parseFlags() flags {
 	}
 
 	if *envFile == "" {
-		slog.Warn("No env file provided, using only environment variables or fallbacks to defaults(development only)")
+		slog.Warn("No env file provided, using only environment variables or fallback defaults (development only)")
 	}
 
 	return parsedFlags
 }
 
-func (f flags) HandleFlags(ctx context.Context, application *app.App, cfg *config.Config) {
-	if f.Version {
-		f.handleVersionFlag(cfg)
-	}
+func (f flags) handleHealthFlag(ctx context.Context, application *app.Application) {
 	if f.Health {
-		f.handleHealthFlag(ctx, application)
+		err := application.CheckReadiness(ctx)
+		if err != nil {
+			slog.Error("Health check failed", "error", err)
+			os.Exit(1)
+		}
+		fmt.Println("Health check: OK")
+		os.Exit(0)
 	}
-}
-
-func (f flags) handleHealthFlag(ctx context.Context, application *app.App) {
-	err := application.CheckReadiness(ctx)
-	if err != nil {
-		slog.Error("Health check failed", "error", err)
-		os.Exit(1)
-	}
-	fmt.Println("Health check: OK")
-	os.Exit(0)
 }
 
 func (f flags) handleVersionFlag(cfg *config.Config) {
-	fmt.Printf("Revenue Leak Detective API\n")
-	fmt.Printf("Version: %s", cfg.BuildInfo.GIT_TAG)
-	fmt.Printf("Commit: %s", cfg.BuildInfo.GIT_COMMIT_FULL)
-	fmt.Printf("Built: %s", cfg.BuildInfo.BUILD_TIMESTAMP)
-	os.Exit(0)
+	if f.Version {
+		fmt.Printf("Revenue Leak Detective API\n")
+		fmt.Printf("Version: %s\n", cfg.BuildInfo.GIT_TAG)
+		fmt.Printf("Commit: %s\n", cfg.BuildInfo.GIT_COMMIT_FULL)
+		fmt.Printf("Built: %s\n", cfg.BuildInfo.BUILD_TIMESTAMP)
+		os.Exit(0)
+	}
 }
