@@ -14,32 +14,34 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type userRepository struct {
-	db     *pgxpool.Pool
+type UserRepositoryImplementation struct {
+	pool   *pgxpool.Pool
 	logger *slog.Logger
 }
 
-func NewUserRepository(pool *pgxpool.Pool, l *slog.Logger) UserRepository {
-	return &userRepository{
-		db:     pool,
+func NewUserRepository(pool *pgxpool.Pool, l *slog.Logger) UserRepositoryImplementation {
+	if pool == nil {
+		panic("pool cannot be nil")
+	}
+	if l == nil {
+		panic("logger cannot be nil")
+	}
+	return UserRepositoryImplementation{
+		pool:   pool,
 		logger: l,
 	}
 }
 
 // CreateUser creates a new user within tenant context
-func (r *userRepository) CreateUser(ctx context.Context, arg models.CreateUserParams, tenantID uuid.UUID) (models.User, error) {
+func (r UserRepositoryImplementation) CreateUser(ctx context.Context, arg models.CreateUserParams, tenantID uuid.UUID) (models.User, error) {
 	r.logger.InfoContext(ctx, "Creating user",
 		"email", arg.Email,
 		"tenant_id", tenantID)
 
 	var user models.User
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		dbUser, err := queries.CreateUser(ctx, toCreateUserDBParams(arg))
 		if err != nil {
-			r.logger.ErrorContext(ctx, ErrFailedToCreateUser.Error(),
-				"email", arg.Email,
-				"tenant_id", tenantID,
-				"error", err)
 			return err
 		}
 		user = toUserDomain(dbUser)
@@ -58,22 +60,18 @@ func (r *userRepository) CreateUser(ctx context.Context, arg models.CreateUserPa
 		"user_id", user.ID,
 		"email", user.Email,
 		"tenant_id", tenantID)
-	return user, err
+	return user, nil
 }
 
-func (r *userRepository) DeleteUser(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) (int64, error) {
+func (r UserRepositoryImplementation) DeleteUser(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) (int64, error) {
 	r.logger.InfoContext(ctx, "Deleting user",
 		"user_id", userID,
 		"tenant_id", tenantID)
 
 	var rowsAffected int64
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		rows, err := queries.DeleteUser(ctx, convertUUIDToPgtypeUUID(userID))
 		if err != nil {
-			r.logger.ErrorContext(ctx, ErrFailedToDeleteUser.Error(),
-				"user_id", userID,
-				"tenant_id", tenantID,
-				"error", err)
 			return err
 		}
 		rowsAffected = rows
@@ -92,20 +90,17 @@ func (r *userRepository) DeleteUser(ctx context.Context, userID uuid.UUID, tenan
 		"user_id", userID,
 		"tenant_id", tenantID,
 		"rows_affected", rowsAffected)
-	return rowsAffected, err
+	return rowsAffected, nil
 }
 
-func (r *userRepository) GetAllUsers(ctx context.Context, tenantID uuid.UUID) ([]models.User, error) {
+func (r UserRepositoryImplementation) GetAllUsers(ctx context.Context, tenantID uuid.UUID) ([]models.User, error) {
 	r.logger.DebugContext(ctx, "Retrieving all users",
 		"tenant_id", tenantID)
 
 	var domainUsers []models.User
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		dbUsers, err := queries.GetAllUsers(ctx)
 		if err != nil {
-			r.logger.ErrorContext(ctx, ErrFailedToGetAllUsers.Error(),
-				"tenant_id", tenantID,
-				"error", err)
 			return err
 		}
 		for _, dbUser := range dbUsers {
@@ -118,7 +113,7 @@ func (r *userRepository) GetAllUsers(ctx context.Context, tenantID uuid.UUID) ([
 		r.logger.ErrorContext(ctx, ErrFailedToGetAllUsers.Error(),
 			"tenant_id", tenantID,
 			"error", err)
-		return domainUsers, err
+		return domainUsers, nil
 	}
 
 	r.logger.DebugContext(ctx, "Retrieved all users successfully",
@@ -127,19 +122,15 @@ func (r *userRepository) GetAllUsers(ctx context.Context, tenantID uuid.UUID) ([
 	return domainUsers, err
 }
 
-func (r *userRepository) GetUserByEmail(ctx context.Context, email string, tenantID uuid.UUID) (models.User, error) {
+func (r UserRepositoryImplementation) GetUserByEmail(ctx context.Context, email string, tenantID uuid.UUID) (models.User, error) {
 	r.logger.DebugContext(ctx, "Retrieving user by email",
 		"email", email,
 		"tenant_id", tenantID)
 
 	var domainUser models.User
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		dbUser, err := queries.GetUserByEmail(ctx, email)
 		if err != nil {
-			r.logger.ErrorContext(ctx, ErrFailedToGetUserByEmail.Error(),
-				"email", email,
-				"tenant_id", tenantID,
-				"error", err)
 			return err
 		}
 		domainUser = toUserDomain(dbUser)
@@ -158,16 +149,16 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string, tenan
 		"user_id", domainUser.ID,
 		"email", email,
 		"tenant_id", tenantID)
-	return domainUser, err
+	return domainUser, nil
 }
 
-func (r *userRepository) GetUserByID(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) (models.User, error) {
+func (r UserRepositoryImplementation) GetUserByID(ctx context.Context, userID uuid.UUID, tenantID uuid.UUID) (models.User, error) {
 	r.logger.DebugContext(ctx, "Retrieving user by ID",
 		"user_id", userID,
 		"tenant_id", tenantID)
 
 	var user models.User
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		dbUser, err := queries.GetUserByID(ctx, convertUUIDToPgtypeUUID(userID))
 		if err != nil {
 			r.logger.ErrorContext(ctx, ErrFailedToGetUserByID.Error(),
@@ -195,19 +186,15 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID uuid.UUID, tena
 	return user, err
 }
 
-func (r *userRepository) UpdateUser(ctx context.Context, arg models.UpdateUserParams, tenantID uuid.UUID) (models.User, error) {
+func (r UserRepositoryImplementation) UpdateUser(ctx context.Context, arg models.UpdateUserParams, tenantID uuid.UUID) (models.User, error) {
 	r.logger.InfoContext(ctx, "Updating user",
 		"user_id", arg.ID,
 		"tenant_id", tenantID)
 
 	var user models.User
-	err := WithTenantContext(ctx, r.db, tenantID, func(queries *db.Queries) error {
+	err := WithTenantContext(ctx, r.pool, tenantID, func(queries *db.Queries) error {
 		dbUser, err := queries.UpdateUser(ctx, toUpdateUserDBParams(arg))
 		if err != nil {
-			r.logger.ErrorContext(ctx, ErrFailedToUpdateUser.Error(),
-				"user_id", arg.ID,
-				"tenant_id", tenantID,
-				"error", err)
 			return err
 		}
 		user = toUserDomain(dbUser)
@@ -237,7 +224,7 @@ func toUserDomain(u db.User) models.User {
 		ExternalID: u.ExternalID,
 		CreatedAt:  u.CreatedAt.Time,
 		UpdatedAt:  u.UpdatedAt.Time,
-		TenantID:   convertPgtypeUUIDToUUID(u.ID),
+		TenantID:   convertPgtypeUUIDToUUID(u.TenantID),
 	}
 }
 
