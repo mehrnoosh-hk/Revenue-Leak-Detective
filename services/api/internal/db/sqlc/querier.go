@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CountAllActions(ctx context.Context) (int64, error)
 	CountAllEvents(ctx context.Context) (int64, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (Action, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
@@ -18,15 +19,17 @@ type Querier interface {
 	DeleteAction(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteEvent(ctx context.Context, id pgtype.UUID) (int64, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
-	GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error)
-	GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error)
-	GetAllEvents(ctx context.Context) ([]Event, error)
+	GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error)
+	GetAllActions(ctx context.Context) ([]Action, error)
+	GetAllActionsPaginated(ctx context.Context, arg GetAllActionsPaginatedParams) ([]Action, error)
+	GetAllEvents(ctx context.Context, arg GetAllEventsParams) ([]Event, error)
 	GetAllEventsPaginated(ctx context.Context, arg GetAllEventsPaginatedParams) ([]Event, error)
 	GetAllUsers(ctx context.Context) ([]User, error)
 	GetEventByID(ctx context.Context, id pgtype.UUID) (Event, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	UpdateAction(ctx context.Context, arg UpdateActionParams) (Action, error)
+	// it is not business logic to update the tenant_id, provider_id, event_id
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

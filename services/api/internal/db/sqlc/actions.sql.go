@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAllActions = `-- name: CountAllActions :one
+SELECT COUNT(*) FROM actions
+`
+
+func (q *Queries) CountAllActions(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllActions)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAction = `-- name: CreateAction :one
 INSERT INTO actions (leak_id, action_type, status, result) VALUES ($1, $2, $3, $4) RETURNING id, leak_id, action_type, status, result, created_at, updated_at
 `
@@ -54,20 +65,14 @@ func (q *Queries) DeleteAction(ctx context.Context, id pgtype.UUID) (int64, erro
 	return result.RowsAffected(), nil
 }
 
-const getActionByIDForTenant = `-- name: GetActionByIDForTenant :one
-SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
-FROM actions a
-JOIN leaks l ON l.id = a.leak_id
-WHERE a.id = $1 AND l.tenant_id = $2
+const getActionByID = `-- name: GetActionByID :one
+SELECT id, leak_id, action_type, status, result, created_at, updated_at
+FROM actions
+WHERE id = $1
 `
 
-type GetActionByIDForTenantParams struct {
-	ID       pgtype.UUID `json:"id"`
-	TenantID pgtype.UUID `json:"tenant_id"`
-}
-
-func (q *Queries) GetActionByIDForTenant(ctx context.Context, arg GetActionByIDForTenantParams) (Action, error) {
-	row := q.db.QueryRow(ctx, getActionByIDForTenant, arg.ID, arg.TenantID)
+func (q *Queries) GetActionByID(ctx context.Context, id pgtype.UUID) (Action, error) {
+	row := q.db.QueryRow(ctx, getActionByID, id)
 	var i Action
 	err := row.Scan(
 		&i.ID,
@@ -81,15 +86,53 @@ func (q *Queries) GetActionByIDForTenant(ctx context.Context, arg GetActionByIDF
 	return i, err
 }
 
-const getAllActionsForTenant = `-- name: GetAllActionsForTenant :many
-SELECT a.id, a.leak_id, a.action_type, a.status, a.result, a.created_at, a.updated_at
-FROM actions a
-JOIN leaks l ON l.id = a.leak_id
-WHERE l.tenant_id = $1
+const getAllActions = `-- name: GetAllActions :many
+SELECT id, leak_id, action_type, status, result, created_at, updated_at
+FROM actions
 `
 
-func (q *Queries) GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UUID) ([]Action, error) {
-	rows, err := q.db.Query(ctx, getAllActionsForTenant, tenantID)
+func (q *Queries) GetAllActions(ctx context.Context) ([]Action, error) {
+	rows, err := q.db.Query(ctx, getAllActions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Action
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.LeakID,
+			&i.ActionType,
+			&i.Status,
+			&i.Result,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllActionsPaginated = `-- name: GetAllActionsPaginated :many
+SELECT id, leak_id, action_type, status, result, created_at, updated_at
+FROM actions
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetAllActionsPaginatedParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllActionsPaginated(ctx context.Context, arg GetAllActionsPaginatedParams) ([]Action, error) {
+	rows, err := q.db.Query(ctx, getAllActionsPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -119,17 +162,15 @@ func (q *Queries) GetAllActionsForTenant(ctx context.Context, tenantID pgtype.UU
 const updateAction = `-- name: UpdateAction :one
 UPDATE actions 
 SET 
-    leak_id = CASE WHEN $2::uuid IS NOT NULL THEN $2::uuid ELSE leak_id END, 
-    action_type = CASE WHEN $3::action_type_enum IS NOT NULL THEN $3::action_type_enum ELSE action_type END, 
-    status = CASE WHEN $4::action_status_enum IS NOT NULL THEN $4::action_status_enum ELSE status END, 
-    result = CASE WHEN $5::action_result_enum IS NOT NULL THEN $5::action_result_enum ELSE result END 
+    action_type = CASE WHEN $2::action_type_enum IS NOT NULL THEN $2::action_type_enum ELSE action_type END, 
+    status = CASE WHEN $3::action_status_enum IS NOT NULL THEN $3::action_status_enum ELSE status END, 
+    result = CASE WHEN $4::action_result_enum IS NOT NULL THEN $4::action_result_enum ELSE result END 
 WHERE id = $1 
 RETURNING id, leak_id, action_type, status, result, created_at, updated_at
 `
 
 type UpdateActionParams struct {
 	ID         pgtype.UUID          `json:"id"`
-	LeakID     pgtype.UUID          `json:"leak_id"`
 	ActionType NullActionTypeEnum   `json:"action_type"`
 	Status     NullActionStatusEnum `json:"status"`
 	Result     NullActionResultEnum `json:"result"`
@@ -138,7 +179,6 @@ type UpdateActionParams struct {
 func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (Action, error) {
 	row := q.db.QueryRow(ctx, updateAction,
 		arg.ID,
-		arg.LeakID,
 		arg.ActionType,
 		arg.Status,
 		arg.Result,

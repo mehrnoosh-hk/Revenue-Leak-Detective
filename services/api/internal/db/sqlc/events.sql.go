@@ -78,10 +78,16 @@ const getAllEvents = `-- name: GetAllEvents :many
 SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
 FROM events
 ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) GetAllEvents(ctx context.Context) ([]Event, error) {
-	rows, err := q.db.Query(ctx, getAllEvents)
+type GetAllEventsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllEvents(ctx context.Context, arg GetAllEventsParams) ([]Event, error) {
+	rows, err := q.db.Query(ctx, getAllEvents, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -179,32 +185,24 @@ func (q *Queries) GetEventByID(ctx context.Context, id pgtype.UUID) (Event, erro
 const updateEvent = `-- name: UpdateEvent :one
 UPDATE events
 SET
-  tenant_id = CASE WHEN $1::uuid IS NOT NULL THEN $1::uuid ELSE tenant_id END,
-  provider_id = CASE WHEN $2::uuid IS NOT NULL THEN $2::uuid ELSE provider_id END,
-  event_type = CASE WHEN $3::event_type_enum IS NOT NULL THEN $3::event_type_enum ELSE event_type END,
-  event_id = CASE WHEN $4::varchar IS NOT NULL THEN $4::varchar ELSE event_id END,
-  status = CASE WHEN $5::event_status_enum IS NOT NULL THEN $5::event_status_enum ELSE status END,
-  data = CASE WHEN $6::jsonb IS NOT NULL THEN $6::jsonb ELSE data END
-WHERE id = $7
+  event_type = CASE WHEN $1::event_type_enum IS NOT NULL THEN $1::event_type_enum ELSE event_type END,
+  status = CASE WHEN $2::event_status_enum IS NOT NULL THEN $2::event_status_enum ELSE status END,
+  data = CASE WHEN $3::jsonb IS NOT NULL THEN $3::jsonb ELSE data END
+WHERE id = $4
 RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at
 `
 
 type UpdateEventParams struct {
-	TenantID   pgtype.UUID         `json:"tenant_id"`
-	ProviderID pgtype.UUID         `json:"provider_id"`
-	EventType  NullEventTypeEnum   `json:"event_type"`
-	EventID    *string             `json:"event_id"`
-	Status     NullEventStatusEnum `json:"status"`
-	Data       []byte              `json:"data"`
-	ID         pgtype.UUID         `json:"id"`
+	EventType NullEventTypeEnum   `json:"event_type"`
+	Status    NullEventStatusEnum `json:"status"`
+	Data      []byte              `json:"data"`
+	ID        pgtype.UUID         `json:"id"`
 }
 
+// it is not business logic to update the tenant_id, provider_id, event_id
 func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error) {
 	row := q.db.QueryRow(ctx, updateEvent,
-		arg.TenantID,
-		arg.ProviderID,
 		arg.EventType,
-		arg.EventID,
 		arg.Status,
 		arg.Data,
 		arg.ID,
