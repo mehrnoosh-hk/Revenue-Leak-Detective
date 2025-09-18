@@ -5,7 +5,7 @@
 # API PHONY declarations
 .PHONY: api-build api-build-local api-clean api-test api-test-coverage 
 .PHONY: api-benchmark api-lint api-fmt api-fmt-check api-vet api-deps api-security api-all
-.PHONY: api-run api-run-version api-run-help api-run-env
+.PHONY: api-run api-run-version api-run-help api-run-env api-tag-release
 
 ## api-build: Build the API service for production (Linux)
 api-build: validate-env
@@ -100,11 +100,21 @@ api-run-help:
 	@printf "$(GREEN) Running the API server with help...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go --help
 
-## api-run-env: Run the API service with environment file (usage: make api-run-env ENV_FILE=.env.dev)
+## api-run-env: Run the API service with environment file (defaults to .env.dev)
 api-run-env:
-	@test -n "$(ENV_FILE)" || (printf "$(RED)❌ ENV_FILE is required. Usage: make api-run-env ENV_FILE=.env.dev$(NC)\n" && exit 1)
-	@printf "$(GREEN) Running the API server with env file: $(ENV_FILE)...$(NC)\n"
-	@cd $(API_SERVICE_PATH) && go run ./cmd/*.go --env-file=../../$(ENV_FILE)
+	@if [ -z "$(ENV_FILE)" ]; then \
+		ENV_FILE=.env.dev; \
+	fi; \
+	printf "$(GREEN) Running the API server with env file: $$ENV_FILE...$(NC)\n"; \
+	cd $(API_SERVICE_PATH) && go run ./cmd/*.go --env-file=../../$$ENV_FILE
+
+## tag-release: Create and push a new release tag (usage: make tag-release VERSION=v1.2.3)
+api-tag-release:
+	@test -n "$(VERSION)" || (printf "$(RED)❌ VERSION is required. Usage: make tag-release VERSION=v1.2.3$(NC)\n" && exit 1)
+	@printf "$(GREEN)��️  Creating tag $(VERSION)...$(NC)\n"
+	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@git push origin $(VERSION)
+	@printf "$(GREEN)✓ Tag $(VERSION) created and pushed$(NC)\n"
 
 ## api-all: Run all API quality checks
 api-all: api-fmt api-fmt-check api-vet api-lint api-test api-test-coverage api-deps api-security
