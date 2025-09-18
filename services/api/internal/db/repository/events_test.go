@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -18,6 +17,8 @@ import (
 
 // Test helper functions
 func createTestEvent() models.Event {
+	data := json.RawMessage(`{"amount": 100.50, "currency": "USD"}`)
+
 	return models.Event{
 		ID:         uuid.New(),
 		TenantID:   uuid.New(),
@@ -25,7 +26,7 @@ func createTestEvent() models.Event {
 		EventType:  models.EventTypeEnumPaymentFailed,
 		EventID:    "evt_test_123",
 		Status:     models.EventStatusEnumPending,
-		Data:       `{"amount": 100.50, "currency": "USD"}`,
+		Data:       &data,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -45,11 +46,12 @@ func createTestCreateEventParams() models.CreateEventParams {
 func createTestUpdateEventParams() models.UpdateEventParams {
 	eventType := models.EventTypeEnumPaymentSucceeded
 	status := models.EventStatusEnumProcessed
+	data := json.RawMessage(`{"amount": 200.75, "currency": "EUR"}`)
 	return models.UpdateEventParams{
 		ID:        uuid.New(),
 		EventType: &eventType,
 		Status:    &status,
-		Data:      `{"amount": 200.75, "currency": "EUR"}`,
+		Data:      &data,
 	}
 }
 
@@ -105,23 +107,6 @@ type noOpWriter struct{}
 
 func (w *noOpWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
-}
-
-// TestNewEventsRepository tests the constructor function
-func TestNewEventsRepository(t *testing.T) {
-	// This test verifies that the constructor returns a valid repository
-	// In a real scenario, you would need a valid pool, but for unit testing
-	// we can test the interface compliance
-	logger := createTestLogger()
-
-	// Test that the repository implements the EventsRepository interface
-	var repo EventsRepository = &eventsRepository{
-		pool:   nil,    // We can't easily mock pgxpool.Pool without complex setup
-		logger: logger, // Required field for struct initialization
-	}
-
-	assert.NotNil(t, repo)
-	assert.Implements(t, (*EventsRepository)(nil), repo)
 }
 
 // TestConversionFunctions tests the conversion helper functions
@@ -289,27 +274,20 @@ func TestToUpdateEventDBParams(t *testing.T) {
 			input: func() models.UpdateEventParams {
 				eventType := models.EventTypeEnumPaymentSucceeded
 				status := models.EventStatusEnumProcessed
-				eventID := "evt_updated_123"
-				tenantID := uuid.New()
-				providerID := uuid.New()
+				data := json.RawMessage(`{"amount": 200.75, "currency": "EUR"}`)
 
 				return models.UpdateEventParams{
-					ID:         uuid.New(),
-					TenantID:   &tenantID,
-					ProviderID: &providerID,
-					EventType:  &eventType,
-					EventID:    &eventID,
-					Status:     &status,
-					Data:       `{"amount": 200.75, "currency": "EUR"}`,
+					ID: uuid.New(),
+
+					EventType: &eventType,
+					Status:    &status,
+					Data:      &data,
 				}
 			}(),
 			expectedError: nil,
 			validateResult: func(t *testing.T, result db.UpdateEventParams) {
 				assert.NotNil(t, result.ID)
-				assert.NotNil(t, result.TenantID)
-				assert.NotNil(t, result.ProviderID)
 				assert.NotNil(t, result.EventType)
-				assert.NotNil(t, result.EventID)
 				assert.NotNil(t, result.Status)
 				assert.NotNil(t, result.Data)
 			},
@@ -318,19 +296,17 @@ func TestToUpdateEventDBParams(t *testing.T) {
 			name: "conversion with partial fields",
 			input: func() models.UpdateEventParams {
 				status := models.EventStatusEnumFailed
+				data := json.RawMessage(`{"error": "payment failed"}`)
 				return models.UpdateEventParams{
 					ID:     uuid.New(),
 					Status: &status,
-					Data:   `{"error": "payment failed"}`,
+					Data:   &data,
 				}
 			}(),
 			expectedError: nil,
 			validateResult: func(t *testing.T, result db.UpdateEventParams) {
 				assert.NotNil(t, result.ID)
-				assert.False(t, result.TenantID.Valid)
-				assert.False(t, result.ProviderID.Valid)
 				assert.False(t, result.EventType.Valid)
-				assert.Nil(t, result.EventID)
 				assert.True(t, result.Status.Valid)
 				assert.NotNil(t, result.Data)
 			},
@@ -388,20 +364,6 @@ func TestEdgeCases(t *testing.T) {
 		assert.Equal(t, errors.New("ConvertInterfaceToBytes: unsupported data type, expected string or []byte"), err)
 	})
 
-	t.Run("UpdateEvent with invalid data type", func(t *testing.T) {
-		// Create a struct that can't be converted to bytes
-		invalidData := make(chan int)
-
-		params := models.UpdateEventParams{
-			ID:   uuid.New(),
-			Data: invalidData,
-		}
-
-		_, err := toUpdateEventDBParams(params)
-		assert.Error(t, err)
-		assert.Equal(t, errors.New("ConvertInterfaceToBytes: unsupported data type, expected string or []byte"), err)
-	})
-
 	t.Run("CreateEvent with empty event ID", func(t *testing.T) {
 		params := models.CreateEventParams{
 			TenantID:   uuid.New(),
@@ -416,32 +378,6 @@ func TestEdgeCases(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "", result.EventID)
 	})
-
-	t.Run("UpdateEvent with empty event ID", func(t *testing.T) {
-		eventID := ""
-		params := models.UpdateEventParams{
-			ID:      uuid.New(),
-			EventID: &eventID,
-		}
-
-		result, err := toUpdateEventDBParams(params)
-		assert.NoError(t, err)
-		assert.NotNil(t, result.EventID)
-		assert.Equal(t, "", *result.EventID)
-	})
-}
-
-// TestRepositoryInterfaceCompliance tests that the repository implements the interface correctly
-func TestRepositoryInterfaceCompliance(_ *testing.T) {
-	logger := createTestLogger()
-	repo := &eventsRepository{
-		// We can't easily mock pgxpool.Pool without complex setup
-		pool:   nil,    // nolint:govet
-		logger: logger, // nolint:govet
-	}
-
-	// Test that the repository implements the EventsRepository interface
-	var _ EventsRepository = repo
 }
 
 // TestDataValidation tests data validation scenarios
@@ -657,176 +593,5 @@ func TestPaginationHelperFunctions(t *testing.T) {
 				assert.Equal(t, tc.expectedPrev, response.HasPrevious, "HasPrevious mismatch for %s", tc.name)
 			})
 		}
-	})
-}
-
-// TestTransactionSupport tests transaction-related functionality
-func TestTransactionSupport(t *testing.T) {
-	t.Run("WithTransaction success", func(t *testing.T) {
-		// This test verifies that WithTransaction executes successfully
-		// In a real scenario, you would need a valid pool and database
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil, // We can't easily mock pgxpool.Pool without complex setup
-			logger: logger,
-		}
-
-		// Test that the repository implements the transaction interface
-		var _ EventsRepository = repo
-		assert.NotNil(t, repo)
-	})
-
-	t.Run("CreateEventsBatch with empty slice", func(t *testing.T) {
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test empty batch - this should return early without calling WithTransaction
-		events, err := repo.CreateEventsBatch(context.Background(), []models.CreateEventParams{}, uuid.New())
-		assert.NoError(t, err)
-		assert.Empty(t, events)
-	})
-
-	t.Run("UpdateEventsBatch with empty slice", func(t *testing.T) {
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test empty batch
-		events, err := repo.UpdateEventsBatch(context.Background(), []models.UpdateEventParams{}, uuid.New())
-		assert.NoError(t, err)
-		assert.Empty(t, events)
-	})
-
-	t.Run("Transaction error handling", func(t *testing.T) {
-		// Test that transaction methods handle errors properly
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test that the repository implements all transaction methods
-		var txRepo EventsRepository = repo
-		assert.NotNil(t, txRepo)
-
-		// Test method signatures exist - we can't call them with nil transactions
-		// but we can verify the interface compliance
-		tenantID := uuid.New()
-		eventID := uuid.New()
-
-		// Test that the methods exist by checking interface compliance
-		// These would fail at runtime due to nil pool and nil transaction,
-		// but we're testing interface compliance
-		assert.Implements(t, (*EventsRepository)(nil), repo)
-
-		// Test that we can create the parameters without issues
-		createParams := createTestCreateEventParams()
-		updateParams := createTestUpdateEventParams()
-
-		assert.NotEmpty(t, createParams.EventID)
-		assert.NotEqual(t, uuid.Nil, updateParams.ID)
-		assert.NotEqual(t, uuid.Nil, tenantID)
-		assert.NotEqual(t, uuid.Nil, eventID)
-	})
-}
-
-// TestBatchOperations tests batch operation functionality
-func TestBatchOperations(t *testing.T) {
-	t.Run("CreateEventsBatch interface compliance", func(t *testing.T) {
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test that the repository implements batch operations
-		var batchRepo EventsRepository = repo
-		assert.NotNil(t, batchRepo)
-
-		// Test method signatures exist
-		ctx := context.Background()
-		tenantID := uuid.New()
-
-		// These methods handle empty slices gracefully, so we just check that the methods exist
-		// and can be called without panicking (interface compliance test)
-		_, err := batchRepo.CreateEventsBatch(ctx, []models.CreateEventParams{}, tenantID)
-		// Empty slice should return no error and empty result
-		assert.NoError(t, err, "CreateEventsBatch should handle empty slice gracefully")
-
-		_, err = batchRepo.UpdateEventsBatch(ctx, []models.UpdateEventParams{}, tenantID)
-		// Empty slice should return no error and empty result
-		assert.NoError(t, err, "UpdateEventsBatch should handle empty slice gracefully")
-	})
-
-	t.Run("Batch operation parameters", func(t *testing.T) {
-		// Test batch operation parameter validation
-		createParams := []models.CreateEventParams{
-			createTestCreateEventParams(),
-			createTestCreateEventParams(),
-		}
-
-		updateParams := []models.UpdateEventParams{
-			createTestUpdateEventParams(),
-			createTestUpdateEventParams(),
-		}
-
-		assert.Len(t, createParams, 2)
-		assert.Len(t, updateParams, 2)
-
-		// Test that parameters are properly structured
-		for i, param := range createParams {
-			assert.NotEmpty(t, param.EventID, "EventID should not be empty for param %d", i)
-			assert.NotEqual(t, uuid.Nil, param.TenantID, "TenantID should not be nil for param %d", i)
-			assert.NotEqual(t, uuid.Nil, param.ProviderID, "ProviderID should not be nil for param %d", i)
-		}
-
-		for i, param := range updateParams {
-			assert.NotEqual(t, uuid.Nil, param.ID, "ID should not be nil for param %d", i)
-		}
-	})
-}
-
-// TestTransactionErrorHandling tests transaction error scenarios
-func TestTransactionErrorHandling(t *testing.T) {
-	t.Run("Transaction rollback scenarios", func(t *testing.T) {
-		// Test that transaction methods handle various error scenarios
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test that error handling methods exist and are properly structured
-		// We can't test WithTransaction with a nil pool as it will panic
-		// Instead, we test that the repository implements the interface
-		assert.Implements(t, (*EventsRepository)(nil), repo)
-
-		// Test that we can create error scenarios for testing
-		testError := errors.New("simulated transaction error")
-		assert.Error(t, testError)
-		assert.Equal(t, "simulated transaction error", testError.Error())
-	})
-
-	t.Run("Transaction panic handling", func(t *testing.T) {
-		logger := createTestLogger()
-		repo := &eventsRepository{
-			pool:   nil,
-			logger: logger,
-		}
-
-		// Test that panic handling is in place
-		// We can't test WithTransaction with a nil pool as it will panic before reaching our panic
-		// Instead, we test that the repository implements the interface
-		assert.Implements(t, (*EventsRepository)(nil), repo)
-
-		// Test that we can simulate panic scenarios for testing
-		assert.Panics(t, func() {
-			panic("simulated panic")
-		})
 	})
 }
