@@ -4,6 +4,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,22 +16,22 @@ import (
 //   - ID: Unique identifier for the event (UUID)
 //   - TenantID: Reference to the tenant that owns this event
 //   - ProviderID: Reference to the provider associated with this event (e.g. Stripe, PayPal, etc.)
-//   - EventType: Classification of the event (see EventTypeEnum)
+//   - EventID: External identifier for the event (e.g. Stripe webhook ID, PayPal webhook ID, etc.)
 //   - EventID: External for the event (e.g. Stripe webhook ID, PayPal webhook ID, etc.)
 //   - Status: Current processing status of the event (see EventStatusEnum)
 //   - Data: Flexible field containing event-specific payload data
 //   - CreatedAt: Timestamp when the event was first created
 //   - UpdatedAt: Timestamp when the event was last modified
 type Event struct {
-	ID         uuid.UUID       `json:"id"`
-	TenantID   uuid.UUID       `json:"tenant_id"`
-	ProviderID uuid.UUID       `json:"provider_id"`
-	EventType  EventTypeEnum   `json:"event_type"`
-	EventID    string          `json:"event_id"`
-	Status     EventStatusEnum `json:"status"`
-	Data       any             `json:"data"`
-	CreatedAt  time.Time       `json:"created_at"`
-	UpdatedAt  time.Time       `json:"updated_at"`
+	ID         uuid.UUID        `json:"id"`
+	TenantID   uuid.UUID        `json:"tenant_id"`
+	ProviderID uuid.UUID        `json:"provider_id"`
+	EventType  EventTypeEnum    `json:"event_type"`
+	EventID    string           `json:"event_id"`
+	Status     EventStatusEnum  `json:"status"`
+	Data       *json.RawMessage `json:"data"`
+	CreatedAt  time.Time        `json:"created_at"`
+	UpdatedAt  time.Time        `json:"updated_at"`
 }
 
 // CreateEventParams represents parameters for creating a new Event.
@@ -70,11 +71,8 @@ type CreateEventParams struct {
 //
 // Note: UpdatedAt timestamp is handled automatically by the persistence layer.
 type UpdateEventParams struct {
-	TenantID   *uuid.UUID       `json:"tenant_id"`
-	ProviderID *uuid.UUID       `json:"provider_id"`
-	EventType  *EventTypeEnum   `json:"event_type"`
-	EventID    *string          `json:"event_id"`
-	Status     *EventStatusEnum `json:"status"`
-	Data       any              `json:"data"`
-	ID         uuid.UUID        `json:"id"`
+	EventType *EventTypeEnum   `json:"event_type"`
+	Status    *EventStatusEnum `json:"status"`
+	Data      *json.RawMessage `json:"data"`
+	ID        uuid.UUID        `json:"id"`
 }
