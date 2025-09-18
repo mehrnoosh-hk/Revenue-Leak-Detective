@@ -12,16 +12,29 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type EventsService interface {
+	CreateEvent(ctx context.Context, args models.CreateEventParams, tenantID uuid.UUID) (models.Event, error)
+	DeleteEvent(ctx context.Context, eventID uuid.UUID, tenantID uuid.UUID) (int64, error)
+	GetAllEvents(ctx context.Context, tenantID uuid.UUID) ([]models.Event, error)
+	GetAllEventsPaginated(ctx context.Context, tenantID uuid.UUID, params models.PaginationParams) (models.PaginatedResponse[models.Event], error)
+	GetEventByID(ctx context.Context, eventID uuid.UUID, tenantID uuid.UUID) (models.Event, error)
+	UpdateEvent(ctx context.Context, args models.UpdateEventParams, tenantID uuid.UUID) (models.Event, error)
+	CountAllEvents(ctx context.Context, tenantID uuid.UUID) (int64, error)
+}
+
 type eventsService struct {
-	eventsRepository repository.EventsRepository
+	eventsRepository EventsRepository
 	logger           *slog.Logger
 }
 
 // - Pointer to an initialized EventService.
-func NewEventService(pool *pgxpool.Pool, l *slog.Logger) EventsService {
+func NewEventService(pool *pgxpool.Pool, l *slog.Logger) (EventsService, error) {
 	// It needs to initialze an EventsRepository with the dependencies injected from the app
-	eR := repository.NewEventsRepository(pool, l)
-	return &eventsService{eventsRepository: eR, logger: l}
+	eR, err := repository.NewEventsRepository(pool, l)
+	if err != nil {
+		return nil, err
+	}
+	return &eventsService{eventsRepository: eR, logger: l}, nil
 }
 
 // CreateEvent creates a new event in the system.
