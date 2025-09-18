@@ -26,6 +26,8 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 # Get git commit information
+VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT=$(git rev-parse --short HEAD)
 GIT_COMMIT_HASH=$(git rev-parse --short HEAD)
 GIT_COMMIT_FULL=$(git rev-parse HEAD)
 GIT_COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)
