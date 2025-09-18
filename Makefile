@@ -9,6 +9,7 @@ include make/api.mk
 include make/db.mk
 include make/workers.mk
 include make/docker.mk
+include make/release.mk
 
 # =============================================================================
 # PHONY Target Declarations (Main Targets Only)
