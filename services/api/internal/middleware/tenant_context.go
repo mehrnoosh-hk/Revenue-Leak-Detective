@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
+// contextKey is defined in the middleware package
 const tenantIDKey contextKey = "tenantID"
 
 var (
@@ -65,7 +67,7 @@ func extractTenantID(l *slog.Logger, r *http.Request, isDevelopment bool) uuid.U
 		tenantHeader := r.Header.Get("X-Tenant-ID")
 		if tenantHeader != "" {
 			if tenantID, err := uuid.Parse(tenantHeader); err == nil {
-				l.Info("Tenant ID extracted from X-Tenant-ID header", "tenantID", tenantID)
+				l.Debug("Tenant ID extracted from X-Tenant-ID header", "tenantID", tenantID)
 				return tenantID
 			}
 		}
@@ -75,7 +77,7 @@ func extractTenantID(l *slog.Logger, r *http.Request, isDevelopment bool) uuid.U
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if tenantID, err := extractTenantFromJWT(token); err == nil {
-			l.Info("Tenant ID extracted from JWT token", "tenantID", tenantID)
+			l.Debug("Tenant ID extracted from JWT token", "tenantID", tenantID)
 			return tenantID
 		}
 	}
@@ -93,21 +95,11 @@ func extractTenantFromJWT(token string) (uuid.UUID, error) {
 	// 4. Return tenant UUID
 
 	// For now, return a placeholder
-	return uuid.Nil, fmt.Errorf("JWT parsing not implemented, %s", token)
+	_ = token // Just for the linter
+	return uuid.Nil, fmt.Errorf("JWT parsing not implemented")
 }
 
 // isPathExcluded checks if the given path matches any of the excluded paths.
-// It supports exact path matching and prefix matching for health endpoints.
 func isPathExcluded(path string, excludedPaths []string) bool {
-	for _, excludedPath := range excludedPaths {
-		// Exact match
-		if path == excludedPath {
-			return true
-		}
-		// Prefix match for health-related endpoints (e.g., /healthz, /health, /live, /ready)
-		if strings.HasPrefix(path, excludedPath) {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excludedPaths, path)
 }
