@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -73,10 +74,8 @@ func (c *Config) validateDatabase() error {
 func (c *Config) validateEnvironment() error {
 	env := strings.ToLower(c.Environment.Environment)
 
-	for _, valid := range ValidEnvironments {
-		if env == valid {
-			return nil
-		}
+	if slices.Contains(ValidEnvironments, env) {
+		return nil
 	}
 
 	return fmt.Errorf("%s: %s (valid: %v)", ErrInvalidEnvironment, env, ValidEnvironments)

@@ -12,21 +12,30 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id, email, name, created_at, updated_at
+INSERT INTO users (email, name, external_id)
+VALUES (
+    $1, 
+    $2, 
+    CASE WHEN $3::VARCHAR(255) IS NOT NULL THEN $3::VARCHAR(255) ELSE NULL END
+)
+RETURNING id, tenant_id, email, name, external_id, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	Email      string  `json:"email"`
+	Name       string  `json:"name"`
+	ExternalID *string `json:"external_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Name)
+	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Name, arg.ExternalID)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.TenantID,
 		&i.Email,
 		&i.Name,
+		&i.ExternalID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -46,7 +55,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) (int64, error)
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, name, created_at, updated_at FROM users
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users
 `
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
@@ -60,8 +69,10 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.TenantID,
 			&i.Email,
 			&i.Name,
+			&i.ExternalID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -76,35 +87,37 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-
-SELECT id, email, name, created_at, updated_at FROM users WHERE email = $1
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE email = $1
 `
 
-// users table queries
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.TenantID,
 		&i.Email,
 		&i.Name,
+		&i.ExternalID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getUserById = `-- name: GetUserById :one
-SELECT id, email, name, created_at, updated_at FROM users WHERE id = $1
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, tenant_id, email, name, external_id, created_at, updated_at FROM users WHERE id = $1
 `
 
-func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (User, error) {
-	row := q.db.QueryRow(ctx, getUserById, id)
+func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.TenantID,
 		&i.Email,
 		&i.Name,
+		&i.ExternalID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -112,22 +125,36 @@ func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET email = $2, name = $3 WHERE id = $1 RETURNING id, email, name, created_at, updated_at
+UPDATE users 
+SET 
+    email = CASE WHEN $2::VARCHAR(255) IS NOT NULL THEN $2::VARCHAR(255) ELSE email END, 
+    name = CASE WHEN $3::VARCHAR(255) IS NOT NULL THEN $3::VARCHAR(255) ELSE name END, 
+    external_id = CASE WHEN $4::VARCHAR(255) IS NOT NULL THEN $4::VARCHAR(255) ELSE external_id END 
+WHERE id = $1 
+RETURNING id, tenant_id, email, name, external_id, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	ID    pgtype.UUID `json:"id"`
-	Email string      `json:"email"`
-	Name  string      `json:"name"`
+	ID         pgtype.UUID `json:"id"`
+	Email      *string     `json:"email"`
+	Name       *string     `json:"name"`
+	ExternalID *string     `json:"external_id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Email, arg.Name)
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.Email,
+		arg.Name,
+		arg.ExternalID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.TenantID,
 		&i.Email,
 		&i.Name,
+		&i.ExternalID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

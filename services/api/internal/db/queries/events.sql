@@ -1,0 +1,38 @@
+-- name: GetEventByID :one
+SELECT 
+  id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events 
+WHERE id = $1;
+
+-- name: CreateEvent :one
+INSERT INTO events (tenant_id, provider_id, event_type, event_id, status, data) 
+VALUES ($1, $2, $3, $4, $5, $6) 
+RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at;
+
+-- name: GetAllEvents :many
+SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: GetAllEventsPaginated :many
+SELECT id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at 
+FROM events
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountAllEvents :one
+SELECT COUNT(*) FROM events;
+
+-- it is not business logic to update the tenant_id, provider_id, event_id
+-- name: UpdateEvent :one
+UPDATE events
+SET
+  event_type = CASE WHEN sqlc.narg('event_type')::event_type_enum IS NOT NULL THEN sqlc.narg('event_type')::event_type_enum ELSE event_type END,
+  status = CASE WHEN sqlc.narg('status')::event_status_enum IS NOT NULL THEN sqlc.narg('status')::event_status_enum ELSE status END,
+  data = CASE WHEN sqlc.narg('data')::jsonb IS NOT NULL THEN sqlc.narg('data')::jsonb ELSE data END
+WHERE id = sqlc.arg('id')
+RETURNING id, tenant_id, provider_id, event_type, event_id, status, data, created_at, updated_at;
+
+-- name: DeleteEvent :execrows
+DELETE FROM events WHERE id = $1;

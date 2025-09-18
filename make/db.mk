@@ -5,7 +5,7 @@
 # Database PHONY declarations
 .PHONY: migrate-up migrate-down migrate-create migrate-version migrate-force
 .PHONY: migrate-up-step migrate-down-step db-reset sqlc sqlc-check domain-models-generate
-.PHONY: _validate-env _validate-postgres-url _validate-dev-env
+.PHONY: migrate-check _validate-env _validate-postgres-url _validate-dev-env
 
 # =============================================================================
 # Helper Functions
@@ -44,7 +44,7 @@ migrate-down: _validate-postgres-url
 	@. $(ENV_FILE) && \
 		cd $(API_SERVICE_PATH) && \
 		migrate -path ./migrations -database "$$POSTGRES_URL" down -all && \
-		printf "$(GREEN)✓ Last migration rolled back$(NC)\n"
+		printf "$(GREEN)✓ All migrations rolled back$(NC)\n"
 
 ## migrate-up-step: Apply specific number of migration steps (usage: make migrate-up-step STEPS=1)
 migrate-up-step: _validate-postgres-url
@@ -80,16 +80,42 @@ migrate-force: _validate-postgres-url
 		migrate -path ./migrations -database "$$POSTGRES_URL" force $(VERSION) && \
 		printf "$(GREEN)✓ Migration version forced to $(VERSION)$(NC)\n"
 
+## migrate-check: Validate migrations by applying and rolling back (matches CI workflow)
+migrate-check:
+	@printf "$(BLUE)🔍 Validating database migrations...$(NC)\n"
+	@printf "$(YELLOW)⚠️  This will create a temporary test database and apply/rollback all migrations$(NC)\n"
+	@printf "$(BLUE)📋 Checking if migrate CLI is available...$(NC)\n"
+	@which migrate > /dev/null || (printf "$(RED)❌ migrate CLI not found. Please install it first.$(NC)\n" && exit 1)
+	@printf "$(GREEN)✓ migrate CLI found$(NC)\n"
+	@printf "$(BLUE)📋 Creating temporary test database...$(NC)\n"
+	@cd $(API_SERVICE_PATH) && \
+		TEMP_DB_NAME="rld_migrate_check_$$(date +%s)" && \
+		TEMP_DB_URL="postgres://postgres:postgres@localhost:5432/$$TEMP_DB_NAME?sslmode=disable" && \
+		printf "$(BLUE)📊 Test database: $$TEMP_DB_NAME$(NC)\n" && \
+		createdb "$$TEMP_DB_NAME" 2>/dev/null || (printf "$(RED)❌ Failed to create test database. Make sure PostgreSQL is running and accessible.$(NC)\n" && exit 1) && \
+		printf "$(GREEN)✓ Test database created$(NC)\n" && \
+		printf "$(BLUE)⬆️  Applying all migrations...$(NC)\n" && \
+		migrate -path ./migrations -database "$$TEMP_DB_URL" up && \
+		printf "$(GREEN)✓ All migrations applied successfully$(NC)\n" && \
+		printf "$(BLUE)⬇️  Rolling back all migrations...$(NC)\n" && \
+		migrate -path ./migrations -database "$$TEMP_DB_URL" down -all && \
+		printf "$(GREEN)✓ All migrations rolled back successfully$(NC)\n" && \
+		printf "$(BLUE)🧹 Cleaning up test database...$(NC)\n" && \
+		dropdb "$$TEMP_DB_NAME" 2>/dev/null && \
+		printf "$(GREEN)✓ Test database cleaned up$(NC)\n" && \
+		printf "$(GREEN)✅ Migration validation completed successfully$(NC)\n"
+
 # =============================================================================
 # Migration File Management
 # =============================================================================
 
-## migrate-create: Create a new migration file (usage: make migrate-create NAME=migration_name)
+## migrate-create: Create a new migration file with timestamp (usage: make migrate-create name=migration_name)
+## Note: Uses timestamp format by default (YYYYMMDDHHMMSS). For custom format, modify the command below.
 migrate-create:
-	@test -n "$(NAME)" || (printf "$(RED)❌ NAME is required. Usage: make migrate-create NAME=migration_name$(NC)\n" && exit 1)
-	@printf "$(BLUE)📝 Creating migration: $(NAME)...$(NC)\n"
+	@test -n "$(name)" || (printf "$(RED)❌ name is required. Usage: make migrate-create name=migration_name$(NC)\n" && exit 1)
+	@printf "$(BLUE)📝 Creating migration: $(name)...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && \
-		migrate create -ext sql -dir ./migrations -seq $(NAME) && \
+		migrate create -ext sql -seq -digits 3 -dir ./migrations $(name) && \
 		printf "$(GREEN)✓ Migration files created in ./migrations/$(NC)\n"
 
 # =============================================================================
@@ -98,6 +124,7 @@ migrate-create:
 
 ## sqlc-generate: Generate SQLC code from SQL queries
 sqlc-generate:
+	@sqlc version | grep -q "1.30.0" || (printf "$(RED)❌ SQLC version is not 1.30.0. Please update SQLC to 1.30.0.$(NC)\n" && exit 1)
 	@printf "$(BLUE)📝 Generating SQLC code...$(NC)\n"
 	@cd $(API_SERVICE_PATH) && sqlc generate
 	@printf "$(GREEN)✓ SQLC code generated$(NC)\n"

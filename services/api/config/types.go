@@ -2,6 +2,7 @@ package config
 
 import (
 	"log/slog"
+	"time"
 )
 
 // HTTPConfig holds HTTP server configuration for the API service
@@ -16,6 +17,26 @@ type HTTPConfig struct {
 	// Default: "3030"
 	// Environment variable: API_PORT
 	Port string `yaml:"API_PORT" json:"port" example:"3030" validate:"required"`
+
+	// ReadTimeout is the maximum duration for reading the entire request, including the body
+	// Default: 15 seconds
+	// Environment variable: API_READ_TIMEOUT
+	ReadTimeout time.Duration `yaml:"API_READ_TIMEOUT" json:"read_timeout" example:"15" validate:"required"`
+
+	// ReadHeaderTimeout is the maximum duration for reading request headers only, excluding the body
+	// Default: 5 seconds
+	// Environment variable: API_READ_HEADER_TIMEOUT
+	ReadHeaderTimeout time.Duration `yaml:"API_READ_HEADER_TIMEOUT" json:"read_header_timeout" example:"5" validate:"required"`
+
+	// WriteTimeout is the maximum duration before timing out writes of the response
+	// Default: 15 seconds
+	// Environment variable: API_WRITE_TIMEOUT
+	WriteTimeout time.Duration `yaml:"API_WRITE_TIMEOUT" json:"write_timeout" example:"15" validate:"required"`
+
+	// IdleTimeout is the maximum amount of time to wait for the next request when keep-alives are enabled
+	// Default: 60 seconds
+	// Environment variable: API_IDLE_TIMEOUT
+	IdleTimeout time.Duration `yaml:"API_IDLE_TIMEOUT" json:"idle_timeout" example:"60" validate:"required"`
 }
 
 // DatabaseConfig holds database configuration
@@ -90,6 +111,8 @@ type EnvironmentConfig struct {
 
 // BuildInfoConfig holds build information configuration
 type BuildInfoConfig struct {
+	//
+
 	// GIT_COMMIT_HASH is the short git commit hash
 	// Example: "a1b2c3d"
 	GIT_COMMIT_HASH string `yaml:"GIT_COMMIT_HASH" json:"git_commit_hash" example:"a1b2c3d"`

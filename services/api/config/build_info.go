@@ -5,10 +5,10 @@ import (
 	"log/slog"
 )
 
-// PrintEffectiveConfig prints the effective configuration (excluding secrets and build information)
+// printEffectiveConfig prints the effective configuration (excluding secrets and build information)
 // This provides a human-readable overview of the current configuration
-func (c *Config) PrintEffectiveConfig(logger *slog.Logger) {
-	logger.Info("Effective configuration loaded")
+func printEffectiveConfig(c *Config, logger *slog.Logger) {
+	logger.Info("Effective configuration:")
 	logger.Info(fmt.Sprintf("config_version: %s", c.Environment.ConfigVer))
 	logger.Info(fmt.Sprintf("environment: %s", c.Environment.Environment))
 	logger.Info(fmt.Sprintf("debug: %v", c.Environment.Debug))
@@ -21,9 +21,9 @@ func (c *Config) PrintEffectiveConfig(logger *slog.Logger) {
 	logger.Info(fmt.Sprintf("db_ssl_mode: %s", c.Database.SSLMode))
 }
 
-// PrintBuildInfo prints the build information
-func (c *Config) PrintBuildInfo(logger *slog.Logger) {
-	logger.Info("Build information")
+// printBuildInfo prints the build information
+func printBuildInfo(c *Config, logger *slog.Logger) {
+	logger.Info("Build information:")
 	logger.Info(fmt.Sprintf("version: %s", c.BuildInfo.GIT_TAG))
 	logger.Info(fmt.Sprintf("commit: %s", c.BuildInfo.GIT_COMMIT_FULL))
 	logger.Info(fmt.Sprintf("build_date: %s", c.BuildInfo.BUILD_TIMESTAMP))

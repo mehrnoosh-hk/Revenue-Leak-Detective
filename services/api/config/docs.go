@@ -67,12 +67,12 @@ func extractFieldInfo(field reflect.StructField) FieldInfo {
 	// Extract other information from comments
 	for _, comment := range comments {
 		comment = strings.TrimSpace(comment)
-		if strings.HasPrefix(comment, "Default:") {
-			info.Default = strings.TrimSpace(strings.TrimPrefix(comment, "Default:"))
-		} else if strings.HasPrefix(comment, "Environment variable:") {
-			info.Environment = strings.TrimSpace(strings.TrimPrefix(comment, "Environment variable:"))
-		} else if strings.HasPrefix(comment, "Options:") {
-			options := strings.TrimSpace(strings.TrimPrefix(comment, "Options:"))
+		if after, ok := strings.CutPrefix(comment, "Default:"); ok {
+			info.Default = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(comment, "Environment variable:"); ok {
+			info.Environment = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(comment, "Options:"); ok {
+			options := strings.TrimSpace(after)
 			info.Options = strings.Split(options, ", ")
 		} else if strings.HasPrefix(comment, "Must be between") {
 			info.Validation = comment

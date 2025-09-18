@@ -3,18 +3,18 @@
 # =============================================================================
 
 # Shell configuration
-SHELL := /bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
+SHELL := /bin/sh
+.SHELLFLAGS := -ec
 
 # Colors for output
-RED := \e[31m
-GREEN := \e[32m
-YELLOW := \e[33m
-BLUE := \e[34m
-MAGENTA := \e[35m
-CYAN := \e[36m
-BOLD := \e[1m
-NC := \e[0m
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+MAGENTA := \033[35m
+CYAN := \033[36m
+BOLD := \033[1m
+NC := \033[0m
 
 # Project metadata
 PROJECT_NAME := revenue-leak-detective
@@ -24,7 +24,7 @@ ENV_FILE := .env.dev
 API_SERVICE_PATH := ./services/api
 API_BINARY_NAME := rld-api
 API_BINARY_PATH := ./bin/$(API_BINARY_NAME)
-API_MAIN_PATH := $(API_SERVICE_PATH)/cmd/main.go
+API_MAIN_PATH := $(API_SERVICE_PATH)/cmd
 API_DOCKER_IMAGE := rld-api
 
 # Workers Service (Python) Configuration
