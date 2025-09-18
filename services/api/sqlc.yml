@@ -26,4 +26,6 @@ sql:
         - db_type: "citext"
           go_type: "string"
         - db_type: "jsonb"
-          go_type: "json.RawMessage"
+          go_type:
+            import: "encoding/json"
+            type: "RawMessage"
