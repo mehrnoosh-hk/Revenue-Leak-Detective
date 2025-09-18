@@ -23,11 +23,13 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	db "rdl-api/internal/db/sqlc"
+	"rdl-api/internal/domain/models"
 )
 
 // convertUUIDToPgtypeUUID converts a uuid.UUID to a pgtype.UUID,
@@ -50,7 +52,7 @@ func convertUUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
 //
 // Returns:
 //   - pgtype.UUID: The corresponding pgtype.UUID, with Valid set appropriately.
-func convertNullableUUIDToPgtypeUUID(id *uuid.UUID) pgtype.UUID {
+func convertNullableUUIDToPgtypeUUID(id *uuid.UUID) pgtype.UUID { //nolint: unused
 	if id == nil {
 		return pgtype.UUID{Valid: false}
 	}
@@ -163,67 +165,67 @@ type convertedEnums interface {
 //		// handle error
 //	}
 //	nullEventType := result
-func convertEnumsToNullableEnum[T convertableEnums, R convertedEnums](enumPtr T) R {
+func convertEnumsToNullableEnum[T convertableEnums, R convertedEnums](enumPtr T) (R, error) {
 	switch v := any(enumPtr).(type) {
 	case *db.EventTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullEventTypeEnum{Valid: false}).(R)
+			return any(db.NullEventTypeEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullEventTypeEnum{EventTypeEnum: *v, Valid: true}).(R)
+		return any(db.NullEventTypeEnum{EventTypeEnum: *v, Valid: true}).(R), nil
 	case *db.EventStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullEventStatusEnum{Valid: false}).(R)
+			return any(db.NullEventStatusEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullEventStatusEnum{EventStatusEnum: *v, Valid: true}).(R)
+		return any(db.NullEventStatusEnum{EventStatusEnum: *v, Valid: true}).(R), nil
 	case *db.ActionTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullActionTypeEnum{Valid: false}).(R)
+			return any(db.NullActionTypeEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullActionTypeEnum{ActionTypeEnum: *v, Valid: true}).(R)
+		return any(db.NullActionTypeEnum{ActionTypeEnum: *v, Valid: true}).(R), nil
 	case *db.ActionStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullActionStatusEnum{Valid: false}).(R)
+			return any(db.NullActionStatusEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullActionStatusEnum{ActionStatusEnum: *v, Valid: true}).(R)
+		return any(db.NullActionStatusEnum{ActionStatusEnum: *v, Valid: true}).(R), nil
 	case *db.ActionResultEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullActionResultEnum{Valid: false}).(R)
+			return any(db.NullActionResultEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullActionResultEnum{ActionResultEnum: *v, Valid: true}).(R)
+		return any(db.NullActionResultEnum{ActionResultEnum: *v, Valid: true}).(R), nil
 	case *db.LeakTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullLeakTypeEnum{Valid: false}).(R)
+			return any(db.NullLeakTypeEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullLeakTypeEnum{LeakTypeEnum: *v, Valid: true}).(R)
+		return any(db.NullLeakTypeEnum{LeakTypeEnum: *v, Valid: true}).(R), nil
 	case *db.PaymentTypeEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullPaymentTypeEnum{Valid: false}).(R)
+			return any(db.NullPaymentTypeEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullPaymentTypeEnum{PaymentTypeEnum: *v, Valid: true}).(R)
+		return any(db.NullPaymentTypeEnum{PaymentTypeEnum: *v, Valid: true}).(R), nil
 	case *db.PaymentStatusEnum:
 		if v == nil {
 			//nolint:errcheck // type assertion is safe due to generic constraints
-			return any(db.NullPaymentStatusEnum{Valid: false}).(R)
+			return any(db.NullPaymentStatusEnum{Valid: false}).(R), nil
 		}
 		//nolint:errcheck // type assertion is safe due to generic constraints
-		return any(db.NullPaymentStatusEnum{PaymentStatusEnum: *v, Valid: true}).(R)
+		return any(db.NullPaymentStatusEnum{PaymentStatusEnum: *v, Valid: true}).(R), nil
 	default:
 		var zero R
-		return zero
+		return zero, fmt.Errorf("unsupported enum type: %T", enumPtr)
 	}
 }
 
@@ -284,4 +286,36 @@ func convertEnumToNullableEnum(enumValue any) (any, error) { //nolint: unused
 	default:
 		return nil, errors.New("ConvertEnumToNullableEnum: unsupported enum type")
 	}
+}
+
+// Action enum conversion functions
+
+// convertActionTypeEnumToDB converts domain ActionTypeEnum to database ActionTypeEnum.
+func convertActionTypeEnumToDB(enum models.ActionTypeEnum) db.ActionTypeEnum {
+	return db.ActionTypeEnum(enum)
+}
+
+// convertActionTypeEnumFromDB converts database ActionTypeEnum to domain ActionTypeEnum.
+func convertActionTypeEnumFromDB(enum db.ActionTypeEnum) models.ActionTypeEnum {
+	return models.ActionTypeEnum(enum)
+}
+
+// convertActionStatusEnumToDB converts domain ActionStatusEnum to database ActionStatusEnum.
+func convertActionStatusEnumToDB(enum models.ActionStatusEnum) db.ActionStatusEnum {
+	return db.ActionStatusEnum(enum)
+}
+
+// convertActionStatusEnumFromDB converts database ActionStatusEnum to domain ActionStatusEnum.
+func convertActionStatusEnumFromDB(enum db.ActionStatusEnum) models.ActionStatusEnum {
+	return models.ActionStatusEnum(enum)
+}
+
+// convertActionResultEnumToDB converts domain ActionResultEnum to database ActionResultEnum.
+func convertActionResultEnumToDB(enum models.ActionResultEnum) db.ActionResultEnum {
+	return db.ActionResultEnum(enum)
+}
+
+// convertActionResultEnumFromDB converts database ActionResultEnum to domain ActionResultEnum.
+func convertActionResultEnumFromDB(enum db.ActionResultEnum) models.ActionResultEnum {
+	return models.ActionResultEnum(enum)
 }
