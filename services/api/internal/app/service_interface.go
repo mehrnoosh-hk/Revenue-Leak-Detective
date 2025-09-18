@@ -2,21 +2,25 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"rdl-api/internal/domain/models"
+	"rdl-api/internal/domain/services"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Services struct {
-	HealthService HealthService
-	UsersService UsersService
-	EventsService EventsService
+	HealthService  HealthService
+	UsersService   UsersService
+	EventsService  EventsService
 	ActionsService ActionsService
 }
 
 type HealthService interface {
 	CheckReadiness(ctx context.Context) error
 	CheckLiveness(ctx context.Context) error
+	GetVersion() string
 }
 
 type UsersService interface {
@@ -45,4 +49,26 @@ type ActionsService interface {
 	GetAllActionsPaginated(ctx context.Context, tenantID uuid.UUID, params models.PaginationParams) (models.PaginatedResponse[models.Action], error)
 	GetActionByID(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) (models.Action, error)
 	CountAllActions(ctx context.Context, tenantID uuid.UUID) (int64, error)
+}
+
+// setupDomainServices
+func setupDomainServices(pool *pgxpool.Pool, logger *slog.Logger, version string) Services {
+
+	hService, err := services.NewHealthService(pool, logger, version)
+	if err != nil {
+		panic(err)
+	}
+	uService := services.NewUserService(pool, logger)
+	eService, err := services.NewEventService(pool, logger)
+	if err != nil {
+		panic(err)
+	}
+	aService := services.NewActionsService(pool, logger)
+
+	return Services{
+		HealthService:  hService,
+		UsersService:   uService,
+		EventsService:  eService,
+		ActionsService: aService,
+	}
 }
