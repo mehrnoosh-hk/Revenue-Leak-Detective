@@ -31,43 +31,56 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE POLICY tenant_isolation_users ON users
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Customers table policies  
 CREATE POLICY tenant_isolation_customers ON customers
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Payments table policies
 CREATE POLICY tenant_isolation_payments ON payments
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Leaks table policies
 CREATE POLICY tenant_isolation_leaks ON leaks
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Events table policies
 CREATE POLICY tenant_isolation_events ON events
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Integrations table policies
 CREATE POLICY tenant_isolation_integrations ON integrations
     FOR ALL
     TO PUBLIC
-    USING (tenant_id = current_tenant_id() OR is_service_account());
+    USING (tenant_id = current_tenant_id() OR is_service_account())
+    WITH CHECK (tenant_id = current_tenant_id() OR is_service_account());
 
 -- Actions table policies (via leak relationship)
 CREATE POLICY tenant_isolation_actions ON actions
     FOR ALL
     TO PUBLIC
     USING (
+        EXISTS (
+            SELECT 1 FROM leaks 
+            WHERE leaks.id = actions.leak_id 
+            AND leaks.tenant_id = current_tenant_id()
+        ) OR is_service_account()
+    )
+    WITH CHECK (
         EXISTS (
             SELECT 1 FROM leaks 
             WHERE leaks.id = actions.leak_id 
