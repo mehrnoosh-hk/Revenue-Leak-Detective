@@ -12,14 +12,23 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// userService implements the UserService interface using Tenant Aware User Repository
-type userService struct {
-	userRepository repository.UserRepository
+type UsersService interface {
+	CreateUser(ctx context.Context, params models.CreateUserParams, tenantID uuid.UUID) (models.User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) (int64, error)
+	GetAllUsers(ctx context.Context, tenantID uuid.UUID) ([]models.User, error)
+	GetUserByEmail(ctx context.Context, email string, tenantID uuid.UUID) (models.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID, tenantID uuid.UUID) (models.User, error)
+	UpdateUser(ctx context.Context, params models.UpdateUserParams, tenantID uuid.UUID) (models.User, error)
 }
 
-func NewUserService(db *pgxpool.Pool, l *slog.Logger) UsersService {
+// userService implements the UserService interface using Tenant Aware User Repository
+type userService struct {
+	userRepository UserRepository
+}
+
+func NewUserService(pool *pgxpool.Pool, l *slog.Logger) UsersService {
 	return &userService{
-		userRepository: repository.NewUserRepository(db, l),
+		userRepository: repository.NewUserRepository(pool, l),
 	}
 }
 
