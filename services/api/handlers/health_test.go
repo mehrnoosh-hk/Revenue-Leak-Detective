@@ -43,6 +43,7 @@ type testCase struct {
 type testHealthService struct {
 	CheckReadinessFn func(ctx context.Context) error
 	CheckLivenessFn  func(ctx context.Context) error
+	GetVersionFn     func() string
 }
 
 func (t *testHealthService) CheckReadiness(ctx context.Context) error {
@@ -57,6 +58,13 @@ func (t *testHealthService) CheckLiveness(ctx context.Context) error {
 		return t.CheckLivenessFn(ctx)
 	}
 	return nil
+}
+
+func (t *testHealthService) GetVersion() string {
+	if t.GetVersionFn != nil {
+		return t.GetVersionFn()
+	}
+	return expectedVersion
 }
 
 // Test builders for creating test instances
@@ -74,6 +82,9 @@ func newHealthyService() *testHealthService {
 		CheckLivenessFn: func(ctx context.Context) error {
 			return nil
 		},
+		GetVersionFn: func() string {
+			return expectedVersion
+		},
 	}
 }
 
@@ -87,6 +98,9 @@ func newUnhealthyService(err error) *testHealthService {
 		},
 		CheckLivenessFn: func(ctx context.Context) error {
 			return err
+		},
+		GetVersionFn: func() string {
+			return expectedVersion
 		},
 	}
 }
@@ -108,6 +122,9 @@ func newTimeoutService(delay time.Duration) *testHealthService {
 			case <-ctx.Done():
 				return ctx.Err()
 			}
+		},
+		GetVersionFn: func() string {
+			return expectedVersion
 		},
 	}
 }
@@ -192,7 +209,7 @@ func runHealthCheckTest(t *testing.T, tc testCase) {
 	rr := httptest.NewRecorder()
 
 	// Create handler with test health service
-	handler := HealthCheckHandler(newTestLogger(), tc.healthService)
+	handler := ReadyHandler(newTestLogger(), tc.healthService)
 
 	// Handle potential panic for nil service
 	panicked := false
@@ -354,7 +371,7 @@ func TestHealthCheckHandler_EdgeCases(t *testing.T) {
 	t.Run("nil_logger_uses_default", func(t *testing.T) {
 		req := createTestRequest(http.MethodGet)
 		rr := httptest.NewRecorder()
-		handler := HealthCheckHandler(nil, newHealthyService())
+		handler := ReadyHandler(nil, newHealthyService())
 		handler.ServeHTTP(rr, req)
 
 		assertHTTPResponse(t, rr, http.StatusOK, expectedHealthyStatus, true)
@@ -377,7 +394,7 @@ func TestHealthCheckHandler_EdgeCases(t *testing.T) {
 
 		req := createTestRequestWithContext(http.MethodGet, testEndpoint, ctx)
 		rr := httptest.NewRecorder()
-		handler := HealthCheckHandler(newTestLogger(), service)
+		handler := ReadyHandler(newTestLogger(), service)
 		handler.ServeHTTP(rr, req)
 
 		// Should return 500 due to context cancellation
@@ -387,7 +404,7 @@ func TestHealthCheckHandler_EdgeCases(t *testing.T) {
 	t.Run("json_encoding_validation", func(t *testing.T) {
 		req := createTestRequest(http.MethodGet)
 		rr := httptest.NewRecorder()
-		handler := HealthCheckHandler(newTestLogger(), newHealthyService())
+		handler := ReadyHandler(newTestLogger(), newHealthyService())
 		handler.ServeHTTP(rr, req)
 
 		// Verify the response is valid JSON
@@ -406,7 +423,7 @@ func TestHealthCheckHandler_ConcurrentAccess(t *testing.T) {
 	const numGoroutines = 100
 	const numRequests = 10
 
-	handler := HealthCheckHandler(newTestLogger(), newHealthyService())
+	handler := ReadyHandler(newTestLogger(), newHealthyService())
 
 	var wg sync.WaitGroup
 	results := make(chan int, numGoroutines*numRequests)
@@ -440,8 +457,8 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 	const numGoroutines = 50
 
 	// Create handlers with different service states
-	healthyHandler := HealthCheckHandler(newTestLogger(), newHealthyService())
-	unhealthyHandler := HealthCheckHandler(newTestLogger(), newUnhealthyService(errTestService))
+	healthyHandler := ReadyHandler(newTestLogger(), newHealthyService())
+	unhealthyHandler := ReadyHandler(newTestLogger(), newUnhealthyService(errTestService))
 
 	var wg sync.WaitGroup
 	healthyResults := make(chan int, numGoroutines)
@@ -492,7 +509,7 @@ func TestHealthCheckHandler_ConcurrentAccessWithErrors(t *testing.T) {
 
 // BenchmarkHealthCheckHandler benchmarks the health check handler performance
 func BenchmarkHealthCheckHandler(b *testing.B) {
-	handler := HealthCheckHandler(newTestLogger(), newHealthyService())
+	handler := ReadyHandler(newTestLogger(), newHealthyService())
 	req := createTestRequest(http.MethodGet)
 
 	b.ResetTimer()
@@ -507,7 +524,7 @@ func BenchmarkHealthCheckHandler(b *testing.B) {
 
 // BenchmarkHealthCheckHandler_Unhealthy benchmarks the health check handler with unhealthy service
 func BenchmarkHealthCheckHandler_Unhealthy(b *testing.B) {
-	handler := HealthCheckHandler(newTestLogger(), newUnhealthyService(errTestService))
+	handler := ReadyHandler(newTestLogger(), newUnhealthyService(errTestService))
 	req := createTestRequest(http.MethodGet)
 
 	b.ResetTimer()
@@ -522,7 +539,7 @@ func BenchmarkHealthCheckHandler_Unhealthy(b *testing.B) {
 
 // BenchmarkHealthCheckHandler_Concurrent benchmarks concurrent health check requests
 func BenchmarkHealthCheckHandler_Concurrent(b *testing.B) {
-	handler := HealthCheckHandler(newTestLogger(), newHealthyService())
+	handler := ReadyHandler(newTestLogger(), newHealthyService())
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"rdl-api/internal/domain/services"
@@ -15,8 +14,8 @@ type HealthResponse struct {
 	Version   string    `json:"version,omitempty"`
 }
 
-// HealthCheckHandler returns a health check handler
-func HealthCheckHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
+// ReadyHandler returns a health check handler
+func ReadyHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Only allow GET requests
 		if r.Method != http.MethodGet {
@@ -24,13 +23,8 @@ func HealthCheckHandler(logger *slog.Logger, healthService services.HealthServic
 			return
 		}
 
-		if logger == nil {
-			logger = slog.Default()
-		}
-
 		if err := healthService.CheckReadiness(r.Context()); err != nil {
-			logger.ErrorContext(r.Context(), "Health check failed", "error", err)
-			http.Error(w, ErrHealthCheckFailed.Error(), http.StatusInternalServerError)
+			WriteJSONErrorResponse(r.Context(), w, logger, ErrHealthCheckFailed, http.StatusInternalServerError)
 			return
 		}
 
@@ -39,16 +33,35 @@ func HealthCheckHandler(logger *slog.Logger, healthService services.HealthServic
 		response := HealthResponse{
 			Status:    "OK",
 			Timestamp: time.Now().UTC(),
-			Version:   "1.0.0", // TODO: Should be loaded from build info
+			Version:   healthService.GetVersion(),
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		WriteJSONSuccessResponse(r.Context(), w, logger, response)
+	}
+}
 
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			logger.ErrorContext(r.Context(), "Failed to encode health response", "error", err)
-			http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
+func LiveHandler(logger *slog.Logger, healthService services.HealthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 			return
 		}
+
+		if err := healthService.CheckLiveness(r.Context()); err != nil {
+			WriteJSONErrorResponse(r.Context(),
+				w,
+				logger,
+				err,
+				http.StatusInternalServerError)
+			return
+		}
+
+		response := HealthResponse{
+			Status:    "OK",
+			Timestamp: time.Now().UTC(),
+			Version:   healthService.GetVersion(),
+		}
+
+		WriteJSONSuccessResponse(r.Context(), w, logger, response)
 	}
 }
