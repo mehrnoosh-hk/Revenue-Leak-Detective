@@ -15,20 +15,26 @@ type PoolPinger interface {
 }
 
 // healthRepository implements HealthRepository using sqlc
-type healthRepository struct {
+type HealthRepositoryImplementation struct {
 	pool   PoolPinger
 	logger *slog.Logger
 }
 
 // NewHealthRepository creates a new health repository instance with a pgxpool.Pool
-func NewHealthRepository(pool *pgxpool.Pool, logger *slog.Logger) HealthRepository {
-	return &healthRepository{
+func NewHealthRepositoryImplementation(pool *pgxpool.Pool, logger *slog.Logger) (HealthRepositoryImplementation, error) {
+	if logger == nil {
+		return HealthRepositoryImplementation{}, ErrLoggerCannotBeNil
+	}
+	if pool == nil {
+		return HealthRepositoryImplementation{}, ErrPoolCannotBeNil
+	}
+	return HealthRepositoryImplementation{
 		pool:   pool,
 		logger: logger,
-	}
+	}, nil
 }
 
 // Ping implements HealthRepository.Ping
-func (h *healthRepository) Ping(ctx context.Context) error {
+func (h HealthRepositoryImplementation) CheckReadiness(ctx context.Context) error {
 	return h.pool.Ping(ctx)
 }
