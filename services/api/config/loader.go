@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -27,6 +28,11 @@ func LoadConfig(envFilePath string) (*Config, error) {
 		HTTP: HTTPConfig{
 			Host: getEnvValue(EnvAPIHost, isProduction, DefaultAPIHost),
 			Port: getEnvValue(EnvAPIPort, isProduction, DefaultAPIPort),
+			// TODO: Should be loaded from config
+			ReadTimeout:       time.Duration(15),
+			ReadHeaderTimeout: 5,
+			WriteTimeout:      15,
+			IdleTimeout:       60,
 		},
 		Database: DatabaseConfig{
 			URL:      os.Getenv(EnvPostgresURL),
