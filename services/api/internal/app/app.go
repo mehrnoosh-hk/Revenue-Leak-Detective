@@ -5,89 +5,93 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
 	"rdl-api/config"
-	"rdl-api/internal/domain/services"
+	"syscall"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// App represents the main application with all its dependencies.
-type App struct {
-	// Core dependencies
-	config *config.Config
-	logger *slog.Logger
-
-	// Repository layer
-	pool *pgxpool.Pool
-
-	// Domain services
-	Services Services
-
-	// Server layer
-	server *AppServer
+// AppServer encapsulates the HTTP server
+type AppServer struct {
+	server *http.Server
 }
 
-type Services struct {
-	HealthService services.HealthService
-	UsersService  services.UsersService
-	EventsService services.EventsService
+// Application lifecycle manager
+type Application struct {
+	container *Container
+	server    *AppServer
 }
 
-// New creates a new App instance with minimal dependencies properly initialized.
-// This is the main entry point for dependency injection.
-func New(cfg *config.Config) (*App, error) {
-	logger := setupLogger(cfg)
-	server := setupServer(cfg)
-	pool, err := setupPgxPool(cfg)
+// NewApplication creates a new Application instance with minimal dependencies properly initialized.
+func NewApplication(ctx context.Context, cfg *config.Config) (*Application, error) {
+	container, err := NewContainer(ctx, cfg)
 	if err != nil {
-		logger.Error("failed to create database connection pool", "error", err)
 		return nil, err
 	}
-	services := setupDomainServices(pool, logger)
-	return &App{
-		config:   cfg,
-		logger:   logger,
-		pool:     pool,
-		Services: services,
-		server:   server,
+
+	appServer := setupAppServer(container)
+	return &Application{
+		container: container,
+		server:    appServer,
 	}, nil
 }
 
 // StartUp initializes and starts the application.
 // It sets up all dependencies and starts the HTTP server.
-func (a *App) StartUp(ctx context.Context) error {
-	a.logger.Info("Starting application")
-	a.logger.Info(fmt.Sprintf("Environment: %s", a.config.GetEnvironment()))
-	a.logger.Info(fmt.Sprintf("Port: %s", a.config.GetPort()))
+func (a *Application) StartUp(ctx context.Context) error {
+	l := a.container.GetLogger()
+	c := a.container
+	server := a.server.server
+	l.Info("Starting application")
+	l.Info(fmt.Sprintf("Environment: %s", c.GetEnvironment()))
 
 	// Verify database connectivity with a short timeout
-	if err := a.Services.HealthService.CheckReadiness(ctx); err != nil {
+	if err := a.container.GetServices().HealthService.CheckReadiness(ctx); err != nil {
 		return err
 	}
-	a.logger.Info("Database connection verified")
+	l.Info("Database connection verified")
 
 	// Start the server
-	a.logger.Info("Server is ready to accept requests")
-	return a.server.Start(ctx, a.logger, a.Services, a.config.IsDevelopment())
+	Start(l, server)
+	l.Info("Server is ready to accept requests on port " + server.Addr)
+
+	// Channel to listen for interrupt signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for interrupt signal
+	select {
+	case sig := <-quit:
+		l.Info("Shutting down Application", "signal", sig.String())
+		err := a.Shutdown(ctx)
+		if err != nil {
+			return err
+		}
+	case <-ctx.Done():
+		l.Info("Shutting down server", "reason", "context canceled")
+		err := a.Shutdown(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	l.Info("Application shut down gracefully")
+	return nil
 }
 
 // Shutdown gracefully shuts down the application.
 // It closes database connections and stops the server.
-func (a *App) Shutdown(ctx context.Context) error {
-	a.logger.Info("Shutting down application")
+func (a *Application) Shutdown(ctx context.Context) error {
+	l := a.container.GetLogger()
 
 	var shutdownErrors []error
 
-	// Close database connection pool
-	if a.pool != nil {
-		a.pool.Close()
-		a.logger.Info("Database connection pool closed")
-	}
+	a.container.Shutdown(ctx)
+	l.Info("Database connection pool closed")
 
 	// Shutdown server with timeout
-	if a.server != nil {
+	if a.server != nil && a.server.server != nil {
 		serverCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
@@ -100,15 +104,13 @@ func (a *App) Shutdown(ctx context.Context) error {
 		return fmt.Errorf("shutdown errors: %v", shutdownErrors)
 	}
 
-	a.logger.Info("Graceful shutdown completed successfully")
-
 	return nil
 }
 
-func (a *App) CheckReadiness(ctx context.Context) error {
-	return a.Services.HealthService.CheckReadiness(ctx)
+func (a *Application) CheckReadiness(ctx context.Context) error {
+	return a.container.GetServices().HealthService.CheckReadiness(ctx)
 }
 
-func (a *App) CheckLiveness(ctx context.Context) error {
-	return a.Services.HealthService.CheckLiveness(ctx)
+func (a *Application) CheckLiveness(ctx context.Context) error {
+	return a.container.GetServices().HealthService.CheckLiveness(ctx)
 }
